@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ManajemenBarang")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d7d49c2ce8363a5353b86b309b1ab401357b182")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44724143ecd0c842cedbb01063bbbe81ad2dcc60")]
 [assembly: System.Reflection.AssemblyProductAttribute("ManajemenBarang")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ManajemenBarang")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

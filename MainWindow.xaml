@@ -147,7 +147,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="APLIKASI MANAJEMEN BARANG" 
+                <TextBlock Text="APLIKASI MANAJEMEN BARANG DISPORAPAR" 
                            Grid.Column="0"
                            FontSize="26" 
                            FontWeight="Bold" 
