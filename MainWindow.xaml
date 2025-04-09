@@ -149,6 +149,9 @@
                                      LostFocus="TxtHargaBarang_LostFocus"
                                      GotFocus="TxtHargaBarang_GotFocus"/>
 
+                            <TextBlock Text="Tanggal Perolehan" Margin="0,0,0,10"/>
+                            <DatePicker x:Name="dpTanggalPerolehan"/>
+
                             <TextBlock Text="Tanggal Peminjaman" Margin="0,0,0,10"/>
                             <DatePicker x:Name="dpTanggalPinjam"/>
 
@@ -225,7 +228,8 @@
                             <DataGridTextColumn Header="Nama Barang" Binding="{Binding NamaBarang}" Width="150"/>
                             <DataGridTextColumn Header="Merek" Binding="{Binding MerekBarang}" Width="120"/>
                             <DataGridTextColumn Header="Harga" Binding="{Binding HargaBarang, StringFormat=C}" Width="120"/>
-                            <DataGridTextColumn Header="Tanggal Pinjam" Binding="{Binding TanggalPinjam, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120"/>
+                            <DataGridTextColumn Header="Tanggal Perolehan" Binding="{Binding TanggalPerolehan, StringFormat='dd/MM/yyyy'}" Width="120"/>
+                            <DataGridTextColumn Header="Tanggal Pinjam" Binding="{Binding TanggalPinjam, StringFormat='dd/MM/yyyy'}" Width="120"/>
                             <DataGridTextColumn Header="Pengguna" Binding="{Binding NamaPengguna}" Width="150"/>
                             <DataGridTextColumn Header="Keterangan" Binding="{Binding KeteranganBarang}" Width="*"/>
                         </DataGrid.Columns>

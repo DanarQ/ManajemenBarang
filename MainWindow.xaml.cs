@@ -33,6 +33,7 @@ public partial class MainWindow : Window
         _storageService = new StorageService();
         LoadData();
         ClearInputs();
+        dpTanggalPerolehan.SelectedDate = DateTime.Now;
         dpTanggalPinjam.SelectedDate = DateTime.Now;
     }
 
@@ -64,6 +65,7 @@ public partial class MainWindow : Window
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
+        dpTanggalPerolehan.SelectedDate = DateTime.Now;
         dpTanggalPinjam.SelectedDate = DateTime.Now;
         txtNamaPengguna.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
@@ -125,6 +127,13 @@ public partial class MainWindow : Window
             return false;
         }
 
+        if (dpTanggalPerolehan.SelectedDate == null)
+        {
+            MessageBox.Show("Tanggal Perolehan harus dipilih!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            dpTanggalPerolehan.Focus();
+            return false;
+        }
+
         if (dpTanggalPinjam.SelectedDate == null)
         {
             MessageBox.Show("Tanggal Pinjam harus dipilih!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -159,6 +168,7 @@ public partial class MainWindow : Window
             NamaBarang = txtNamaBarang.Text,
             MerekBarang = txtMerekBarang.Text,
             HargaBarang = hargaBarang,
+            TanggalPerolehan = dpTanggalPerolehan.SelectedDate ?? DateTime.Now,
             TanggalPinjam = dpTanggalPinjam.SelectedDate ?? DateTime.Now,
             NamaPengguna = txtNamaPengguna.Text,
             KeteranganBarang = txtKeteranganBarang.Text
@@ -173,6 +183,7 @@ public partial class MainWindow : Window
         txtNamaBarang.Text = item.NamaBarang;
         txtMerekBarang.Text = item.MerekBarang;
         txtHargaBarang.Text = item.HargaBarang.ToString("N0", CultureInfo.InvariantCulture);
+        dpTanggalPerolehan.SelectedDate = item.TanggalPerolehan;
         dpTanggalPinjam.SelectedDate = item.TanggalPinjam;
         txtNamaPengguna.Text = item.NamaPengguna;
         txtKeteranganBarang.Text = item.KeteranganBarang;
@@ -239,6 +250,7 @@ public partial class MainWindow : Window
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
+        dpTanggalPerolehan.SelectedDate = DateTime.Now;
         dpTanggalPinjam.SelectedDate = DateTime.Now;
         txtNamaPengguna.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
