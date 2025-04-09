@@ -7,6 +7,94 @@
         mc:Ignorable="d"
         Title="Aplikasi Manajemen Barang" Height="700" Width="1100"
         WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Style untuk TextBox dengan Focus Visual -->
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="BorderBrush" Value="#B0BEC5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#1976D2"/>
+                    <Setter Property="BorderThickness" Value="1.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Style untuk DatePicker -->
+         <Style TargetType="DatePicker">
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,0"/> <!-- Padding disesuaikan -->
+        </Style>
+
+        <!-- Style Tombol Dasar -->
+        <Style x:Key="BaseButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Width" Value="110"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="0,0,15,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+                 <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.6"/>
+                    <Setter Property="Cursor" Value="No"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style Tombol spesifik (mewarisi BaseButtonStyle) -->
+        <Style x:Key="ButtonBaruStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#1E88E5"/>
+        </Style>
+        <Style x:Key="ButtonSimpanStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+        <Style x:Key="ButtonHapusStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#E53935"/>
+             <Setter Property="Margin" Value="0"/> <!-- Hapus margin kanan untuk tombol terakhir -->
+        </Style>
+         <Style x:Key="ButtonCariStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#1976D2"/>
+             <Setter Property="Width" Value="90"/>
+             <Setter Property="Height" Value="35"/>
+             <Setter Property="Margin" Value="0"/> <!-- Hapus margin kanan untuk tombol terakhir -->
+        </Style>
+        
+        <!-- Style untuk Cell DataGrid -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                 <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Padding="{TemplateBinding Padding}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -48,40 +136,43 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="No ID Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtIdBarang" Margin="0,0,0,20" Padding="8"/>
+                            <TextBox x:Name="txtIdBarang"/>
 
                             <TextBlock Text="Nama Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtNamaBarang" Margin="0,0,0,20" Padding="8"/>
+                            <TextBox x:Name="txtNamaBarang"/>
 
                             <TextBlock Text="Merek Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtMerekBarang" Margin="0,0,0,20" Padding="8"/>
+                            <TextBox x:Name="txtMerekBarang"/>
 
                             <TextBlock Text="Harga Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtHargaBarang" Margin="0,0,0,20" Padding="8"
+                            <TextBox x:Name="txtHargaBarang"
                                      LostFocus="TxtHargaBarang_LostFocus"
                                      GotFocus="TxtHargaBarang_GotFocus"/>
 
                             <TextBlock Text="Tanggal Peminjaman" Margin="0,0,0,10"/>
-                            <DatePicker x:Name="dpTanggalPinjam" Margin="0,0,0,20"/>
+                            <DatePicker x:Name="dpTanggalPinjam"/>
 
                             <TextBlock Text="Nama Pengguna" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtNamaPengguna" Margin="0,0,0,20" Padding="8"/>
+                            <TextBox x:Name="txtNamaPengguna"/>
 
                             <TextBlock Text="Keterangan Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtKeteranganBarang" Margin="0,0,0,20" Padding="8" 
-                                     Height="80" TextWrapping="Wrap" AcceptsReturn="True"/>
+                            <TextBox x:Name="txtKeteranganBarang"
+                                     Height="100"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto"/>
                         </StackPanel>
                     </ScrollViewer>
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                        <Button x:Name="btnBaru" Content="Baru" Width="110" Height="40" 
-                                Background="#1E88E5" Foreground="White" Margin="0,0,15,0"
+                        <Button x:Name="btnBaru" Content="Baru" 
+                                Style="{StaticResource ButtonBaruStyle}"
                                 Click="BtnBaru_Click"/>
-                        <Button x:Name="btnSimpan" Content="Simpan" Width="110" Height="40" 
-                                Background="#43A047" Foreground="White" Margin="0,0,15,0"
+                        <Button x:Name="btnSimpan" Content="Simpan"
+                                Style="{StaticResource ButtonSimpanStyle}"
                                 Click="BtnSimpan_Click"/>
-                        <Button x:Name="btnHapus" Content="Hapus" Width="110" Height="40" 
-                                Background="#E53935" Foreground="White"
+                        <Button x:Name="btnHapus" Content="Hapus" 
+                                Style="{StaticResource ButtonHapusStyle}"
                                 Click="BtnHapus_Click"/>
                     </StackPanel>
                 </Grid>
@@ -109,10 +200,10 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="txtCari" Grid.Column="0" Padding="8" Margin="0,0,15,0" 
+                        <TextBox x:Name="txtCari" Grid.Column="0" Margin="0,0,15,0" 
                                  TextChanged="TxtCari_TextChanged"/>
-                        <Button x:Name="btnCari" Content="Cari" Grid.Column="1" Width="90" Height="35" 
-                                Background="#1976D2" Foreground="White"
+                        <Button x:Name="btnCari" Content="Cari" Grid.Column="1" 
+                                Style="{StaticResource ButtonCariStyle}"
                                 Click="BtnCari_Click"/>
                     </Grid>
 
