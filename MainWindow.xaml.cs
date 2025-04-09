@@ -59,7 +59,7 @@ public partial class MainWindow : Window
 
     private void ClearInputs()
     {
-        txtIdBarang.Text = GetNextId().ToString();
+        txtIdBarang.Text = string.Empty;
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
@@ -69,7 +69,7 @@ public partial class MainWindow : Window
         
         _selectedItem = null;
         _isEditMode = false;
-        txtIdBarang.IsEnabled = false;
+        txtIdBarang.IsEnabled = true;
         btnHapus.IsEnabled = false;
     }
 
@@ -205,6 +205,7 @@ public partial class MainWindow : Window
         _isEditMode = false;
         
         // Bersihkan input fields
+        txtIdBarang.Text = string.Empty;
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
@@ -212,15 +213,13 @@ public partial class MainWindow : Window
         txtNamaPengguna.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
         
-        // Generate ID baru
-        txtIdBarang.Text = GetNextId().ToString();
-        txtIdBarang.IsEnabled = false;
+        txtIdBarang.IsEnabled = true;
         
         // Disable tombol hapus karena tidak ada item yang dipilih
         btnHapus.IsEnabled = false;
         
-        // Set fokus ke field pertama
-        txtNamaBarang.Focus();
+        // Set fokus ke field ID
+        txtIdBarang.Focus();
     }
 
     private async void BtnHapus_Click(object sender, RoutedEventArgs e)
