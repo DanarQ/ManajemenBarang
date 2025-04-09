@@ -57,7 +57,9 @@
                             <TextBox x:Name="txtMerekBarang" Margin="0,0,0,20" Padding="8"/>
 
                             <TextBlock Text="Harga Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtHargaBarang" Margin="0,0,0,20" Padding="8"/>
+                            <TextBox x:Name="txtHargaBarang" Margin="0,0,0,20" Padding="8"
+                                     LostFocus="TxtHargaBarang_LostFocus"
+                                     GotFocus="TxtHargaBarang_GotFocus"/>
 
                             <TextBlock Text="Tanggal Peminjaman" Margin="0,0,0,10"/>
                             <DatePicker x:Name="dpTanggalPinjam" Margin="0,0,0,20"/>

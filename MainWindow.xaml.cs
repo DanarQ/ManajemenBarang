@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using ManajemenBarang.Models;
 using ManajemenBarang.Services;
+using System.Globalization;
 
 namespace ManajemenBarang;
 
@@ -110,7 +111,14 @@ public partial class MainWindow : Window
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(txtHargaBarang.Text) || !decimal.TryParse(txtHargaBarang.Text, out _))
+        if (string.IsNullOrWhiteSpace(txtHargaBarang.Text))
+        {
+            MessageBox.Show("Harga Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            txtHargaBarang.Focus();
+            return false;
+        }
+        else if (!decimal.TryParse(txtHargaBarang.Text, NumberStyles.Currency, CultureInfo.CurrentCulture, out _) &&
+                 !decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
         {
             MessageBox.Show("Harga Barang harus diisi dengan angka yang valid!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtHargaBarang.Focus();
@@ -136,12 +144,21 @@ public partial class MainWindow : Window
 
     private Item GetItemFromInputs()
     {
+        decimal hargaBarang = 0;
+        if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal parsedHarga))
+        {
+            hargaBarang = parsedHarga;
+        } else if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedHargaInvariant))
+        {
+            hargaBarang = parsedHargaInvariant;
+        }
+        
         return new Item
         {
             IdBarang = txtIdBarang.Text,
             NamaBarang = txtNamaBarang.Text,
             MerekBarang = txtMerekBarang.Text,
-            HargaBarang = decimal.Parse(txtHargaBarang.Text),
+            HargaBarang = hargaBarang,
             TanggalPinjam = dpTanggalPinjam.SelectedDate ?? DateTime.Now,
             NamaPengguna = txtNamaPengguna.Text,
             KeteranganBarang = txtKeteranganBarang.Text
@@ -155,7 +172,7 @@ public partial class MainWindow : Window
         txtIdBarang.Text = item.IdBarang;
         txtNamaBarang.Text = item.NamaBarang;
         txtMerekBarang.Text = item.MerekBarang;
-        txtHargaBarang.Text = item.HargaBarang.ToString();
+        txtHargaBarang.Text = item.HargaBarang.ToString("N0", CultureInfo.InvariantCulture);
         dpTanggalPinjam.SelectedDate = item.TanggalPinjam;
         txtNamaPengguna.Text = item.NamaPengguna;
         txtKeteranganBarang.Text = item.KeteranganBarang;
@@ -311,5 +328,27 @@ public partial class MainWindow : Window
         ).ToList();
 
         dgBarang.ItemsSource = filteredItems;
+    }
+
+    private void TxtHargaBarang_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal harga))
+        {
+            txtHargaBarang.Text = harga.ToString("C0", CultureInfo.CurrentCulture);
+        }
+        else if (!string.IsNullOrWhiteSpace(txtHargaBarang.Text))
+        {
+            // Jika input tidak valid, kosongkan atau berikan pesan
+            // txtHargaBarang.Text = string.Empty; // Option 1: Kosongkan
+            // MessageBox.Show("Format harga tidak valid.", "Error"); // Option 2: Tampilkan pesan
+        }
+    }
+
+    private void TxtHargaBarang_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Currency, CultureInfo.CurrentCulture, out decimal harga))
+        {
+            txtHargaBarang.Text = harga.ToString("N0", CultureInfo.InvariantCulture);
+        }
     }
 }
