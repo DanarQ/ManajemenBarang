@@ -10,10 +10,15 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 using ManajemenBarang.Models;
 using ManajemenBarang.Services;
 using System.Globalization;
+using Microsoft.Win32;
+using System.IO;
+using System.Text.Json;
+using System.Configuration;
+using System.Data;
+using System.Threading.Tasks;
 
 namespace ManajemenBarang;
 
@@ -26,11 +31,17 @@ public partial class MainWindow : Window
     private List<Item> _daftarBarang = new();
     private Item? _selectedItem;
     private bool _isEditMode = false;
+    private string _backupFolderPath;
 
     public MainWindow()
     {
         InitializeComponent();
         _storageService = new StorageService();
+
+        string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        _backupFolderPath = Path.Combine(appDataPath, "ManajemenBarang", "Backups");
+        Directory.CreateDirectory(_backupFolderPath);
+
         LoadData();
         ClearInputs();
         dpTanggalPerolehan.SelectedDate = DateTime.Now;
@@ -241,14 +252,11 @@ public partial class MainWindow : Window
 
     private void BtnBaru_Click(object sender, RoutedEventArgs e)
     {
-        // Deselect item di DataGrid
         dgBarang.UnselectAll();
         
-        // Bersihkan form dan siapkan untuk data baru
         _selectedItem = null;
         _isEditMode = false;
         
-        // Bersihkan input fields
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
@@ -257,14 +265,11 @@ public partial class MainWindow : Window
         txtNamaPengguna.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
         
-        // Generate ID baru sebagai default, tapi biarkan editable
         txtIdBarang.Text = GetNextId().ToString();
         txtIdBarang.IsEnabled = true;
         
-        // Disable tombol hapus karena tidak ada item yang dipilih
         btnHapus.IsEnabled = false;
         
-        // Set fokus ke field pertama
         txtNamaBarang.Focus();
     }
 
@@ -368,7 +373,93 @@ public partial class MainWindow : Window
 
     private void DatePicker_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
-        // Blokir semua input teks manual
         e.Handled = true;
+    }
+
+    private void BtnBackup_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            int backupNumber = 1;
+            string fileNamePattern = "backup_*_*.json";
+            var existingBackups = Directory.GetFiles(_backupFolderPath, fileNamePattern);
+            if (existingBackups.Length > 0)
+            {
+                var lastBackupNumber = existingBackups
+                    .Select(f => Path.GetFileNameWithoutExtension(f).Split('_')[1])
+                    .Where(n => int.TryParse(n, out _))
+                    .Select(int.Parse)
+                    .OrderByDescending(n => n)
+                    .FirstOrDefault();
+                backupNumber = lastBackupNumber + 1;
+            }
+
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string backupFileName = $"backup_{backupNumber}_{timestamp}.json";
+            string backupFilePath = Path.Combine(_backupFolderPath, backupFileName);
+
+            string sourceFilePath = _storageService.FilePath;
+
+            if (File.Exists(sourceFilePath))
+            {
+                File.Copy(sourceFilePath, backupFilePath);
+                MessageBox.Show($"Data berhasil di-backup ke:\n{backupFilePath}", "Backup Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("File data utama (items.json) tidak ditemukan. Backup dibatalkan.", "Backup Gagal", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Terjadi kesalahan saat backup: {ex.Message}", "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void BtnLoad_Click(object sender, RoutedEventArgs e)
+    {
+        OpenFileDialog openFileDialog = new OpenFileDialog
+        {
+            InitialDirectory = _backupFolderPath,
+            Filter = "JSON backup files (*.json)|*.json",
+            Title = "Pilih File Backup untuk Dimuat"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            string selectedBackupPath = openFileDialog.FileName;
+
+            var result = MessageBox.Show("Memuat backup akan menimpa data saat ini.\nAnda yakin ingin melanjutkan?",
+                                         "Konfirmasi Load Backup",
+                                         MessageBoxButton.YesNo,
+                                         MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    string json = await File.ReadAllTextAsync(selectedBackupPath);
+                    var backupItems = JsonSerializer.Deserialize<List<Item>>(json);
+
+                    if (backupItems != null)
+                    {
+                        await _storageService.SaveItemsAsync(backupItems);
+
+                        LoadData();
+                        ClearInputs();
+
+                        MessageBox.Show("Data berhasil dimuat dari backup.", "Load Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("File backup tidak valid atau kosong.", "Load Gagal", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Terjadi kesalahan saat load backup: {ex.Message}", "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace ManajemenBarang.Services
 {
     public class StorageService
     {
-        private readonly string _filePath;
+        public string FilePath { get; private set; }
         
         public StorageService()
         {
@@ -23,17 +23,17 @@ namespace ManajemenBarang.Services
                 Directory.CreateDirectory(directoryPath);
             }
             
-            _filePath = Path.Combine(directoryPath, "items.json");
+            FilePath = Path.Combine(directoryPath, "items.json");
         }
         
         public async Task<List<Item>> GetItemsAsync()
         {
-            if (!File.Exists(_filePath))
+            if (!File.Exists(FilePath))
             {
                 return new List<Item>();
             }
             
-            string json = await File.ReadAllTextAsync(_filePath);
+            string json = await File.ReadAllTextAsync(FilePath);
             
             if (string.IsNullOrEmpty(json))
             {
@@ -50,7 +50,7 @@ namespace ManajemenBarang.Services
                 WriteIndented = true
             });
             
-            await File.WriteAllTextAsync(_filePath, json);
+            await File.WriteAllTextAsync(FilePath, json);
         }
         
         public async Task<bool> AddItemAsync(Item item)
