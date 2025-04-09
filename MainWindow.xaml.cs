@@ -208,10 +208,12 @@ public partial class MainWindow : Window
                 if (success)
                 {
                     MessageBox.Show("Data barang berhasil diperbarui!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _selectedItem = item;
                 }
                 else
                 {
                     MessageBox.Show("Gagal memperbarui data barang!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
             }
             else
@@ -220,6 +222,7 @@ public partial class MainWindow : Window
                 if (success)
                 {
                     MessageBox.Show("Data barang berhasil disimpan!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ClearInputs();
                 }
                 else
                 {
@@ -228,7 +231,6 @@ public partial class MainWindow : Window
                 }
             }
 
-            ClearInputs();
             LoadData();
         }
         catch (Exception ex)
@@ -362,5 +364,11 @@ public partial class MainWindow : Window
         {
             txtHargaBarang.Text = harga.ToString("N0", CultureInfo.InvariantCulture);
         }
+    }
+
+    private void DatePicker_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        // Blokir semua input teks manual
+        e.Handled = true;
     }
 }
