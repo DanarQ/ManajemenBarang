@@ -59,7 +59,7 @@ public partial class MainWindow : Window
 
     private void ClearInputs()
     {
-        txtIdBarang.Text = string.Empty;
+        txtIdBarang.Text = GetNextId().ToString();
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
@@ -78,6 +78,20 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(txtIdBarang.Text))
         {
             MessageBox.Show("No ID Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            txtIdBarang.Focus();
+            return false;
+        }
+
+        if (!_isEditMode && _daftarBarang.Any(item => item.IdBarang == txtIdBarang.Text))
+        {
+            MessageBox.Show($"ID Barang '{txtIdBarang.Text}' sudah digunakan. Harap gunakan ID lain.", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            txtIdBarang.Focus();
+            return false;
+        }
+        
+        if (!int.TryParse(txtIdBarang.Text, out _))
+        {
+            MessageBox.Show("No ID Barang harus berupa angka!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtIdBarang.Focus();
             return false;
         }
@@ -205,7 +219,6 @@ public partial class MainWindow : Window
         _isEditMode = false;
         
         // Bersihkan input fields
-        txtIdBarang.Text = string.Empty;
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
@@ -213,13 +226,15 @@ public partial class MainWindow : Window
         txtNamaPengguna.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
         
+        // Generate ID baru sebagai default, tapi biarkan editable
+        txtIdBarang.Text = GetNextId().ToString();
         txtIdBarang.IsEnabled = true;
         
         // Disable tombol hapus karena tidak ada item yang dipilih
         btnHapus.IsEnabled = false;
         
-        // Set fokus ke field ID
-        txtIdBarang.Focus();
+        // Set fokus ke field pertama
+        txtNamaBarang.Focus();
     }
 
     private async void BtnHapus_Click(object sender, RoutedEventArgs e)
