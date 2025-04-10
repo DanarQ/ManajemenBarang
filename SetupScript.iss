@@ -25,14 +25,14 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename=Setup-ManajemenBarang-v{#MyAppVersion}
-SetupIconFile=AssetGambar/product.ico ; <-- Coba ganti backslash menjadi forward slash
+SetupIconFile=AssetGambar/product.ico 
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "indonesian"; MessagesFile: "compiler:Languages\Indonesian.isl" ; <-- Sertakan Bahasa Indonesia
+
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
