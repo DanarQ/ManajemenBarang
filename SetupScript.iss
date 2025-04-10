@@ -3,10 +3,10 @@
 
 #define MyAppName "Aplikasi Manajemen Barang Disporapar"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "DanarQusyairi" ; <-- Ganti dengan nama Anda/perusahaan
-#define MyAppURL "https://github.com/DanarQ" ; <-- Ganti dengan URL jika ada
+#define MyAppPublisher "DanarQusyairi" 
+#define MyAppURL "https://github.com/DanarQ" 
 #define MyAppExeName "ManajemenBarang.exe"
-#define SourcePublishPath "bin\Release\net9.0-windows\win-x64\publish\" ; <-- PATH RELATIF DARI FILE SCRIPT INI
+#define SourcePublishPath "bin\Release\net9.0-windows\win-x64\publish\" 
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
