@@ -12,6 +12,7 @@ namespace ManajemenBarang.Services
     {
         public string FilePath { get; private set; }
         public string ImagePath { get; private set; }
+        public string AssetGambarPath { get; private set; }
         
         public StorageService()
         {
@@ -19,6 +20,7 @@ namespace ManajemenBarang.Services
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string directoryPath = Path.Combine(appDataPath, "ManajemenBarang");
             string imagePath = Path.Combine(directoryPath, "Images");
+            string assetGambarPath = Path.Combine(directoryPath, "AssetGambar");
             
             if (!Directory.Exists(directoryPath))
             {
@@ -30,8 +32,14 @@ namespace ManajemenBarang.Services
                 Directory.CreateDirectory(imagePath);
             }
             
+            if (!Directory.Exists(assetGambarPath))
+            {
+                Directory.CreateDirectory(assetGambarPath);
+            }
+            
             FilePath = Path.Combine(directoryPath, "items.json");
             ImagePath = imagePath;
+            AssetGambarPath = assetGambarPath;
         }
         
         public async Task<List<Item>> GetItemsAsync()

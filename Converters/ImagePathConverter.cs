@@ -8,7 +8,7 @@ namespace ManajemenBarang.Converters
     public class ImagePathConverter : IValueConverter
     {
         private static readonly BitmapImage DefaultImage;
-        private static readonly string ImagePath;
+        private static readonly string AssetGambarPath;
 
         static ImagePathConverter()
         {
@@ -16,12 +16,12 @@ namespace ManajemenBarang.Converters
             {
                 DefaultImage = new BitmapImage(new Uri("pack://application:,,,/Assets/no-image.png"));
                 string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                ImagePath = Path.Combine(appDataPath, "ManajemenBarang", "Images");
+                AssetGambarPath = Path.Combine(appDataPath, "ManajemenBarang", "AssetGambar");
             }
             catch
             {
                 DefaultImage = new BitmapImage();
-                ImagePath = string.Empty;
+                AssetGambarPath = string.Empty;
             }
         }
 
@@ -40,7 +40,7 @@ namespace ManajemenBarang.Converters
                     return DefaultImage;
                 }
 
-                string fullPath = Path.Combine(ImagePath, fileName);
+                string fullPath = Path.Combine(AssetGambarPath, fileName);
                 System.Diagnostics.Debug.WriteLine($"Trying to load image from: {fullPath}");
 
                 if (!File.Exists(fullPath))

@@ -38,6 +38,9 @@ public partial class MainWindow : Window
     private string? _currentFotoPath;
     private string? _currentKondisiAwalPath;
     private string? _currentKondisiAkhirPath;
+    private string? _selectedImagePath;
+    private string? _selectedKondisiAwalPath;
+    private string? _selectedKondisiAkhirPath;
 
     public MainWindow()
     {
@@ -110,6 +113,8 @@ public partial class MainWindow : Window
         imgBarang.Source = null;
         imgKondisiAwal.Source = null;
         imgKondisiAkhir.Source = null;
+        noImagePlaceholderKondisiAwal.Visibility = Visibility.Visible;
+        noImagePlaceholderKondisiAkhir.Visibility = Visibility.Visible;
         
         _currentFotoPath = null;
         _currentKondisiAwalPath = null;
@@ -206,15 +211,15 @@ public partial class MainWindow : Window
 
     private Item GetItemFromInputs()
     {
-        decimal hargaBarang = 0;
-        if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal parsedHarga))
+        if (!ValidateInputs()) return null;
+
+        decimal hargaBarang;
+        if (!decimal.TryParse(txtHargaBarang.Text.Replace(",", ""), out hargaBarang))
         {
-            hargaBarang = parsedHarga;
-        } else if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedHargaInvariant))
-        {
-            hargaBarang = parsedHargaInvariant;
+            MsgBox.Show("Harga barang harus berupa angka.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return null;
         }
-        
+
         var item = new Item
         {
             IdBarang = txtIdBarang.Text,
@@ -229,20 +234,31 @@ public partial class MainWindow : Window
             KeteranganKondisiAkhir = txtKeteranganKondisiAkhir.Text
         };
 
-        // Save images if selected
-        if (_currentFotoPath != null)
+        // Handle main photo
+        if (!string.IsNullOrEmpty(_selectedImagePath))
         {
-            item.FotoPath = _storageService.SaveImage(_currentFotoPath, item.IdBarang, "foto");
+            string fileName = $"{item.IdBarang}_{DateTime.Now:yyyyMMddHHmmss}.jpg";
+            string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
+            File.Copy(_selectedImagePath, destinationPath, true);
+            item.FotoPath = fileName;
         }
-        
-        if (_currentKondisiAwalPath != null)
+
+        // Handle kondisi awal photo
+        if (!string.IsNullOrEmpty(_selectedKondisiAwalPath))
         {
-            item.KondisiAwalPath = _storageService.SaveImage(_currentKondisiAwalPath, item.IdBarang, "kondisi_awal");
+            string fileName = $"{item.IdBarang}_kondisi_awal_{DateTime.Now:yyyyMMddHHmmss}.jpg";
+            string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
+            File.Copy(_selectedKondisiAwalPath, destinationPath, true);
+            item.KondisiAwalPath = fileName;
         }
-        
-        if (_currentKondisiAkhirPath != null)
+
+        // Handle kondisi akhir photo
+        if (!string.IsNullOrEmpty(_selectedKondisiAkhirPath))
         {
-            item.KondisiAkhirPath = _storageService.SaveImage(_currentKondisiAkhirPath, item.IdBarang, "kondisi_akhir");
+            string fileName = $"{item.IdBarang}_kondisi_akhir_{DateTime.Now:yyyyMMddHHmmss}.jpg";
+            string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
+            File.Copy(_selectedKondisiAkhirPath, destinationPath, true);
+            item.KondisiAkhirPath = fileName;
         }
 
         return item;
@@ -262,46 +278,48 @@ public partial class MainWindow : Window
         txtKeteranganBarang.Text = item.KeteranganBarang;
         txtKeteranganKondisiAwal.Text = item.KeteranganKondisiAwal;
         txtKeteranganKondisiAkhir.Text = item.KeteranganKondisiAkhir;
-        
-        // Reset all images and paths first
+
+        // Reset all images first
         imgBarang.Source = null;
         imgKondisiAwal.Source = null;
         imgKondisiAkhir.Source = null;
-        _currentFotoPath = null;
-        _currentKondisiAwalPath = null;
-        _currentKondisiAkhirPath = null;
-        
-        // Load images if they exist
+        noImagePlaceholder.Visibility = Visibility.Visible;
+        noImagePlaceholderKondisiAwal.Visibility = Visibility.Visible;
+        noImagePlaceholderKondisiAkhir.Visibility = Visibility.Visible;
+
+        // Load main photo if it exists
         if (!string.IsNullOrEmpty(item.FotoPath))
         {
-            string fullPath = Path.Combine(_storageService.ImagePath, item.FotoPath);
+            string fullPath = Path.Combine(_storageService.AssetGambarPath, item.FotoPath);
             if (File.Exists(fullPath))
             {
                 imgBarang.Source = new BitmapImage(new Uri(fullPath));
-                _currentFotoPath = fullPath;
+                noImagePlaceholder.Visibility = Visibility.Collapsed;
             }
         }
-        
+
+        // Load kondisi awal photo if it exists
         if (!string.IsNullOrEmpty(item.KondisiAwalPath))
         {
-            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAwalPath);
+            string fullPath = Path.Combine(_storageService.AssetGambarPath, item.KondisiAwalPath);
             if (File.Exists(fullPath))
             {
                 imgKondisiAwal.Source = new BitmapImage(new Uri(fullPath));
-                _currentKondisiAwalPath = fullPath;
+                noImagePlaceholderKondisiAwal.Visibility = Visibility.Collapsed;
             }
         }
-        
+
+        // Load kondisi akhir photo if it exists
         if (!string.IsNullOrEmpty(item.KondisiAkhirPath))
         {
-            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAkhirPath);
+            string fullPath = Path.Combine(_storageService.AssetGambarPath, item.KondisiAkhirPath);
             if (File.Exists(fullPath))
             {
                 imgKondisiAkhir.Source = new BitmapImage(new Uri(fullPath));
-                _currentKondisiAkhirPath = fullPath;
+                noImagePlaceholderKondisiAkhir.Visibility = Visibility.Collapsed;
             }
         }
-        
+
         txtIdBarang.IsEnabled = false;
         btnHapus.IsEnabled = true;
         _isEditMode = true;
@@ -672,48 +690,73 @@ public partial class MainWindow : Window
         }
     }
 
-    private void BtnPilihFoto_Click(object sender, RoutedEventArgs e)
+    private async void BtnPilihFoto_Click(object sender, RoutedEventArgs e)
     {
-        var openFileDialog = new Win32.OpenFileDialog
+        var file = await PilihFoto();
+        if (file != null)
         {
-            Filter = "Image files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png",
-            Title = "Pilih foto barang"
-        };
-
-        if (openFileDialog.ShowDialog() == true)
-        {
-            _currentFotoPath = openFileDialog.FileName;
-            imgBarang.Source = new BitmapImage(new Uri(_currentFotoPath));
+            imgBarang.Source = new BitmapImage(new Uri(file.FullName));
+            noImagePlaceholder.Visibility = Visibility.Collapsed;
         }
     }
 
-    private void BtnPilihFotoKondisiAwal_Click(object sender, RoutedEventArgs e)
+    private async void BtnPilihFotoKondisiAwal_Click(object sender, RoutedEventArgs e)
     {
-        var openFileDialog = new Win32.OpenFileDialog
+        var file = await PilihFoto();
+        if (file != null)
         {
-            Filter = "Image files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png",
-            Title = "Pilih Foto Kondisi Awal"
-        };
-
-        if (openFileDialog.ShowDialog() == true)
-        {
-            _currentKondisiAwalPath = openFileDialog.FileName;
-            imgKondisiAwal.Source = new BitmapImage(new Uri(_currentKondisiAwalPath));
+            imgKondisiAwal.Source = new BitmapImage(new Uri(file.FullName));
+            noImagePlaceholderKondisiAwal.Visibility = Visibility.Collapsed;
         }
     }
 
-    private void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
+    private async void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
     {
-        var openFileDialog = new Win32.OpenFileDialog
+        var file = await PilihFoto();
+        if (file != null)
         {
-            Filter = "Image files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png",
-            Title = "Pilih Foto Kondisi Akhir"
+            imgKondisiAkhir.Source = new BitmapImage(new Uri(file.FullName));
+            noImagePlaceholderKondisiAkhir.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private async Task<FileInfo?> PilihFoto()
+    {
+        var openFileDialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Pilih Foto",
+            Filter = "Image files (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|All files (*.*)|*.*",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)
         };
 
         if (openFileDialog.ShowDialog() == true)
         {
-            _currentKondisiAkhirPath = openFileDialog.FileName;
-            imgKondisiAkhir.Source = new BitmapImage(new Uri(_currentKondisiAkhirPath));
+            try
+            {
+                var file = new FileInfo(openFileDialog.FileName);
+                if (file.Exists)
+                {
+                    // Store the selected path based on which button was clicked
+                    if (ReferenceEquals(FocusManager.GetFocusedElement(this), btnPilihFoto))
+                    {
+                        _selectedImagePath = file.FullName;
+                    }
+                    else if (ReferenceEquals(FocusManager.GetFocusedElement(this), btnPilihFotoKondisiAwal))
+                    {
+                        _selectedKondisiAwalPath = file.FullName;
+                    }
+                    else if (ReferenceEquals(FocusManager.GetFocusedElement(this), btnPilihFotoKondisiAkhir))
+                    {
+                        _selectedKondisiAkhirPath = file.FullName;
+                    }
+                    return file;
+                }
+            }
+            catch (Exception ex)
+            {
+                MsgBox.Show($"Error accessing file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+        return null;
     }
 }

@@ -13,6 +13,110 @@
         <!-- Tambahkan konverter untuk path gambar -->
         <converters:ImagePathConverter x:Key="ImagePathConverter"/>
         
+        <!-- Style untuk TextBox dengan animasi dan visual feedback -->
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="BorderBrush" Value="#B0BEC5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                            Margin="{TemplateBinding Padding}"
+                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                <TextBlock x:Name="Placeholder"
+                                         Text="{TemplateBinding Tag}"
+                                         Foreground="#999999"
+                                         Margin="{TemplateBinding Padding}"
+                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                         Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter Property="Visibility" Value="Visible" TargetName="Placeholder"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#1976D2" TargetName="border"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#1976D2" TargetName="border"/>
+                                <Setter Property="BorderThickness" Value="2" TargetName="border"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style untuk Button dengan animasi -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter x:Name="contentPresenter"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect ShadowDepth="1" 
+                                                         BlurRadius="4" 
+                                                         Opacity="0.3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D47A1"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style untuk Image Preview -->
+        <Style x:Key="ImagePreviewBorder" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="1" 
+                                     BlurRadius="4" 
+                                     Opacity="0.2"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
         <!-- Style untuk TextBox dengan Focus Visual -->
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="8"/>
@@ -198,16 +302,24 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="No ID Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtIdBarang"/>
+                            <TextBox x:Name="txtIdBarang" 
+                                     Style="{StaticResource ModernTextBox}"
+                                     Tag="Masukkan ID Barang"/>
 
                             <TextBlock Text="Nama Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtNamaBarang"/>
+                            <TextBox x:Name="txtNamaBarang"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Tag="Masukkan Nama Barang"/>
 
                             <TextBlock Text="Merek Barang" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtMerekBarang"/>
+                            <TextBox x:Name="txtMerekBarang"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Tag="Masukkan Merek Barang"/>
 
                             <TextBlock Text="Harga Barang" Margin="0,0,0,10"/>
                             <TextBox x:Name="txtHargaBarang"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Tag="Masukkan Harga Barang"
                                      LostFocus="TxtHargaBarang_LostFocus"
                                      GotFocus="TxtHargaBarang_GotFocus"/>
 
@@ -234,54 +346,159 @@
                                      VerticalScrollBarVisibility="Auto"/>
 
                             <TextBlock Text="Foto Barang" Margin="0,20,0,10"/>
-                            <Grid Margin="0,0,0,20">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="150" Height="150" Background="#F5F5F5" Margin="0,0,10,0">
-                                    <Image x:Name="imgBarang" Stretch="Uniform"/>
-                                </Border>
-                                <Button x:Name="btnPilihFoto" Content="Pilih Foto" 
-                                        Grid.Column="1" Style="{StaticResource ButtonCariStyle}"
-                                        Click="BtnPilihFoto_Click"/>
-                            </Grid>
+                            <Border Style="{StaticResource ImagePreviewBorder}"
+                                    Height="200"
+                                    Background="#F5F5F5">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Preview Area -->
+                                    <Border Grid.Row="0" 
+                                            Background="White" 
+                                            BorderBrush="#E0E0E0"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Margin="0,0,0,10">
+                                        <Grid>
+                                            <Image x:Name="imgBarang" 
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                   Margin="8"/>
+                                            
+                                            <!-- Placeholder when no image -->
+                                            <StackPanel x:Name="noImagePlaceholder"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="📷"
+                                                           FontSize="32"
+                                                           Foreground="#BDBDBD"
+                                                           HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Belum ada foto"
+                                                           Foreground="#757575"
+                                                           Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Button Area -->
+                                    <Button x:Name="btnPilihFoto"
+                                            Grid.Row="1"
+                                            Style="{StaticResource ModernButton}"
+                                            Background="#1976D2"
+                                            Content="📷 Pilih Foto"
+                                            Click="BtnPilihFoto_Click"
+                                            HorizontalAlignment="Stretch"/>
+                                </Grid>
+                            </Border>
 
                             <Expander Header="Dokumentasi Kondisi" Margin="0,0,0,20">
                                 <StackPanel>
                                     <!-- Kondisi Awal -->
                                     <TextBlock Text="Kondisi Awal" Margin="0,10,0,10"/>
-                                    <Grid Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="150" Height="150" Background="#F5F5F5" Margin="0,0,10,0">
-                                            <Image x:Name="imgKondisiAwal" Stretch="Uniform"/>
-                                        </Border>
-                                        <Button x:Name="btnPilihFotoKondisiAwal" Content="Pilih Foto" 
-                                                Grid.Column="1" Style="{StaticResource ButtonCariStyle}"
-                                                Click="BtnPilihFotoKondisiAwal_Click"/>
-                                    </Grid>
-                                    <TextBlock Text="Keterangan Kondisi Awal" Margin="0,0,0,10"/>
+                                    <Border Style="{StaticResource ImagePreviewBorder}"
+                                            Height="200"
+                                            Background="#F5F5F5">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Preview Area -->
+                                            <Border Grid.Row="0" 
+                                                    Background="White" 
+                                                    BorderBrush="#E0E0E0"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Margin="0,0,0,10">
+                                                <Grid>
+                                                    <Image x:Name="imgKondisiAwal" 
+                                                           Stretch="Uniform"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                                           Margin="8"/>
+                                                    
+                                                    <!-- Placeholder when no image -->
+                                                    <StackPanel x:Name="noImagePlaceholderKondisiAwal"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="📷"
+                                                                   FontSize="32"
+                                                                   Foreground="#BDBDBD"
+                                                                   HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Belum ada foto kondisi awal"
+                                                                   Foreground="#757575"
+                                                                   Margin="0,5,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Button Area -->
+                                            <Button x:Name="btnPilihFotoKondisiAwal"
+                                                    Grid.Row="1"
+                                                    Style="{StaticResource ModernButton}"
+                                                    Background="#1976D2"
+                                                    Content="📷 Pilih Foto Kondisi Awal"
+                                                    Click="BtnPilihFotoKondisiAwal_Click"
+                                                    HorizontalAlignment="Stretch"/>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="Keterangan Kondisi Awal" Margin="0,10,0,10"/>
                                     <TextBox x:Name="txtKeteranganKondisiAwal" Height="60" TextWrapping="Wrap" 
                                              AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
 
                                     <!-- Kondisi Akhir -->
                                     <TextBlock Text="Kondisi Akhir" Margin="0,20,0,10"/>
-                                    <Grid Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="150" Height="150" Background="#F5F5F5" Margin="0,0,10,0">
-                                            <Image x:Name="imgKondisiAkhir" Stretch="Uniform"/>
-                                        </Border>
-                                        <Button x:Name="btnPilihFotoKondisiAkhir" Content="Pilih Foto" 
-                                                Grid.Column="1" Style="{StaticResource ButtonCariStyle}"
-                                                Click="BtnPilihFotoKondisiAkhir_Click"/>
-                                    </Grid>
-                                    <TextBlock Text="Keterangan Kondisi Akhir" Margin="0,0,0,10"/>
+                                    <Border Style="{StaticResource ImagePreviewBorder}"
+                                            Height="200"
+                                            Background="#F5F5F5">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Preview Area -->
+                                            <Border Grid.Row="0" 
+                                                    Background="White" 
+                                                    BorderBrush="#E0E0E0"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Margin="0,0,0,10">
+                                                <Grid>
+                                                    <Image x:Name="imgKondisiAkhir" 
+                                                           Stretch="Uniform"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                                           Margin="8"/>
+                                                    
+                                                    <!-- Placeholder when no image -->
+                                                    <StackPanel x:Name="noImagePlaceholderKondisiAkhir"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="📷"
+                                                                   FontSize="32"
+                                                                   Foreground="#BDBDBD"
+                                                                   HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Belum ada foto kondisi akhir"
+                                                                   Foreground="#757575"
+                                                                   Margin="0,5,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Button Area -->
+                                            <Button x:Name="btnPilihFotoKondisiAkhir"
+                                                    Grid.Row="1"
+                                                    Style="{StaticResource ModernButton}"
+                                                    Background="#1976D2"
+                                                    Content="📷 Pilih Foto Kondisi Akhir"
+                                                    Click="BtnPilihFotoKondisiAkhir_Click"
+                                                    HorizontalAlignment="Stretch"/>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="Keterangan Kondisi Akhir" Margin="0,10,0,10"/>
                                     <TextBox x:Name="txtKeteranganKondisiAkhir" Height="60" TextWrapping="Wrap" 
                                              AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
                                 </StackPanel>
@@ -289,15 +506,25 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                        <Button x:Name="btnBaru" Content="Baru" 
-                                Style="{StaticResource ButtonBaruStyle}"
-                                Click="BtnBaru_Click"/>
-                        <Button x:Name="btnSimpan" Content="Simpan"
-                                Style="{StaticResource ButtonSimpanStyle}"
-                                Click="BtnSimpan_Click"/>
-                        <Button x:Name="btnHapus" Content="Hapus" 
-                                Style="{StaticResource ButtonHapusStyle}"
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button x:Name="btnBaru"
+                                Style="{StaticResource ModernButton}"
+                                Background="#43A047"
+                                Content="🆕 Baru"
+                                Click="BtnBaru_Click"
+                                Margin="0,0,10,0"/>
+                        
+                        <Button x:Name="btnSimpan"
+                                Style="{StaticResource ModernButton}"
+                                Background="#1E88E5"
+                                Content="💾 Simpan"
+                                Click="BtnSimpan_Click"
+                                Margin="0,0,10,0"/>
+                        
+                        <Button x:Name="btnHapus"
+                                Style="{StaticResource ModernButton}"
+                                Background="#E53935"
+                                Content="🗑️ Hapus"
                                 Click="BtnHapus_Click"/>
                     </StackPanel>
                 </Grid>
@@ -371,19 +598,11 @@
                                                 Background="White" 
                                                 BorderBrush="#E0E0E0" 
                                                 BorderThickness="1" 
-                                                CornerRadius="4"
-                                                ToolTip="Klik untuk melihat gambar lebih besar">
+                                                CornerRadius="4">
                                             <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}"
                                                    Stretch="Uniform"
                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                   RenderOptions.EdgeMode="Aliased"
-                                                   Margin="4">
-                                                <Image.Effect>
-                                                    <DropShadowEffect ShadowDepth="0" 
-                                                                      BlurRadius="10" 
-                                                                      Opacity="0.2"/>
-                                                </Image.Effect>
-                                            </Image>
+                                                   Margin="4"/>
                                         </Border>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
