@@ -41,6 +41,7 @@ public partial class MainWindow : Window
     private string? _selectedImagePath;
     private string? _selectedKondisiAwalPath;
     private string? _selectedKondisiAkhirPath;
+    private string? _currentEditingId;
 
     public MainWindow()
     {
@@ -120,6 +121,10 @@ public partial class MainWindow : Window
         _currentFotoPath = null;
         _currentKondisiAwalPath = null;
         _currentKondisiAkhirPath = null;
+        _selectedImagePath = null;
+        _selectedKondisiAwalPath = null;
+        _selectedKondisiAkhirPath = null;
+        _currentEditingId = null;
         
         _selectedItem = null;
         _isEditMode = false;
@@ -241,6 +246,13 @@ public partial class MainWindow : Window
             KeteranganKondisiAkhir = txtKeteranganKondisiAkhir.Text
         };
 
+        // If editing, get the existing item to preserve photo paths if no new photos are selected
+        Item existingItem = null;
+        if (_isEditMode)
+        {
+            existingItem = _daftarBarang.FirstOrDefault(i => i.IdBarang == item.IdBarang);
+        }
+
         // Handle main photo
         if (!string.IsNullOrEmpty(_selectedImagePath))
         {
@@ -248,6 +260,10 @@ public partial class MainWindow : Window
             string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
             File.Copy(_selectedImagePath, destinationPath, true);
             item.FotoPath = fileName;
+        }
+        else if (_isEditMode && existingItem != null)
+        {
+            item.FotoPath = existingItem.FotoPath;
         }
 
         // Handle kondisi awal photo
@@ -258,6 +274,10 @@ public partial class MainWindow : Window
             File.Copy(_selectedKondisiAwalPath, destinationPath, true);
             item.KondisiAwalPath = fileName;
         }
+        else if (_isEditMode && existingItem != null)
+        {
+            item.KondisiAwalPath = existingItem.KondisiAwalPath;
+        }
 
         // Handle kondisi akhir photo
         if (!string.IsNullOrEmpty(_selectedKondisiAkhirPath))
@@ -267,6 +287,10 @@ public partial class MainWindow : Window
             File.Copy(_selectedKondisiAkhirPath, destinationPath, true);
             item.KondisiAkhirPath = fileName;
         }
+        else if (_isEditMode && existingItem != null)
+        {
+            item.KondisiAkhirPath = existingItem.KondisiAkhirPath;
+        }
 
         return item;
     }
@@ -274,6 +298,20 @@ public partial class MainWindow : Window
     private void SetInputsFromItem(Item item)
     {
         if (item == null) return;
+
+        // Reset selected image paths when switching to a different item
+        if (_currentEditingId != item.IdBarang)
+        {
+            _selectedImagePath = null;
+            _selectedKondisiAwalPath = null;
+            _selectedKondisiAkhirPath = null;
+            _currentEditingId = item.IdBarang;
+            
+            // Reset current paths
+            _currentFotoPath = item.FotoPath;
+            _currentKondisiAwalPath = item.KondisiAwalPath;
+            _currentKondisiAkhirPath = item.KondisiAkhirPath;
+        }
 
         txtIdBarang.Text = item.IdBarang;
         txtNamaBarang.Text = item.NamaBarang;
@@ -388,17 +426,43 @@ public partial class MainWindow : Window
         }
     }
 
+    private bool HasUnsavedChanges()
+    {
+        if (_selectedItem == null) return false;
+        
+        return txtNamaBarang.Text != _selectedItem.NamaBarang ||
+               txtMerekBarang.Text != _selectedItem.MerekBarang ||
+               txtHargaBarang.Text.Replace("Rp", "").Replace(".", "").Replace(",", "").Trim() != _selectedItem.HargaBarang.ToString(CultureInfo.InvariantCulture) ||
+               dpTanggalPerolehan.SelectedDate != _selectedItem.TanggalPerolehan ||
+               dpTanggalPinjam.SelectedDate != _selectedItem.TanggalPinjam ||
+               txtNamaPengguna.Text != _selectedItem.NamaPengguna ||
+               txtKeteranganBarang.Text != _selectedItem.KeteranganBarang ||
+               txtKeteranganKondisiAwal.Text != _selectedItem.KeteranganKondisiAwal ||
+               txtKeteranganKondisiAkhir.Text != _selectedItem.KeteranganKondisiAkhir ||
+               !string.IsNullOrEmpty(_selectedImagePath) ||
+               !string.IsNullOrEmpty(_selectedKondisiAwalPath) ||
+               !string.IsNullOrEmpty(_selectedKondisiAkhirPath);
+    }
+
     private void BtnBaru_Click(object sender, RoutedEventArgs e)
     {
-        if (dgBarang.SelectedItem != null)
+        if (HasUnsavedChanges())
         {
-            var result = MsgBox.Show("Apakah Anda yakin ingin membuat data baru? Data yang belum disimpan akan hilang.", "Konfirmasi", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MsgBox.Show("Apakah Anda yakin ingin membuat data baru? Data yang belum disimpan akan hilang.", 
+                "Konfirmasi", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            
             if (result == MessageBoxResult.No)
             {
                 return;
             }
         }
+        
         ClearInputs();
+        
+        // Pastikan tombol foto selalu aktif untuk data baru
+        btnPilihFoto.IsEnabled = true;
+        btnPilihFotoKondisiAwal.IsEnabled = true;
+        btnPilihFotoKondisiAkhir.IsEnabled = true;
     }
 
     private async void BtnHapus_Click(object sender, RoutedEventArgs e)
