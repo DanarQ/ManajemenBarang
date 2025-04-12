@@ -10,4 +10,12 @@
     <ApplicationIcon>AssetGambar\product.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Assets\no-image.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\no-image.png" />
+  </ItemGroup>
+
 </Project>

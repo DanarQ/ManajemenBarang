@@ -343,33 +343,44 @@
                     </Grid>
 
                     <DataGrid x:Name="dgBarang" 
-                              Grid.Row="2" 
-                              AutoGenerateColumns="False" 
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
                               IsReadOnly="True"
                               SelectionMode="Single"
                               SelectionChanged="DgBarang_SelectionChanged"
+                              AlternatingRowBackground="#F5F5F5"
+                              RowBackground="White"
+                              BorderBrush="#E0E0E0"
                               BorderThickness="1"
-                              BorderBrush="#B0BEC5"
-                              Background="White"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
                               GridLinesVisibility="All"
-                              AlternatingRowBackground="#CFD8DC">
+                              HeadersVisibility="Column"
+                              CanUserResizeRows="False"
+                              VerticalAlignment="Top">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="No ID" Binding="{Binding IdBarang}" Width="100"/>
-                            <DataGridTextColumn Header="Nama Barang" Binding="{Binding NamaBarang}" Width="150"/>
-                            <DataGridTextColumn Header="Merek" Binding="{Binding MerekBarang}" Width="120"/>
-                            <DataGridTextColumn Header="Harga" Binding="{Binding HargaBarang, StringFormat=C}" Width="120"/>
-                            <DataGridTextColumn Header="Tanggal Perolehan" Binding="{Binding TanggalPerolehan, StringFormat='dd/MM/yyyy'}" Width="120"/>
-                            <DataGridTextColumn Header="Tanggal Pinjam" Binding="{Binding TanggalPinjam, StringFormat='dd/MM/yyyy'}" Width="120"/>
-                            <DataGridTextColumn Header="Pengguna" Binding="{Binding NamaPengguna}" Width="150"/>
-                            <DataGridTextColumn Header="Keterangan" Binding="{Binding KeteranganBarang}" Width="*"/>
+                            <DataGridTextColumn Header="No ID" Binding="{Binding IdBarang}" Width="Auto"/>
+                            <DataGridTextColumn Header="Nama Barang" Binding="{Binding NamaBarang}" Width="*"/>
+                            <DataGridTextColumn Header="Merek" Binding="{Binding MerekBarang}" Width="Auto"/>
+                            <DataGridTextColumn Header="Harga" Binding="{Binding HargaBarang, StringFormat=C0}" Width="Auto"/>
+                            <DataGridTextColumn Header="Tanggal Perolehan" Binding="{Binding TanggalPerolehan, StringFormat=dd/MM/yyyy}" Width="Auto"/>
+                            <DataGridTextColumn Header="Tanggal Pinjam" Binding="{Binding TanggalPinjam, StringFormat=dd/MM/yyyy}" Width="Auto"/>
+                            <DataGridTextColumn Header="Pengguna" Binding="{Binding NamaPengguna}" Width="Auto"/>
                             <DataGridTemplateColumn Header="Foto" Width="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}" 
-                                               Height="50" Width="50" 
-                                               Stretch="Uniform"/>
+                                        <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}"
+                                               Width="80" Height="80" 
+                                               Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="HighQuality">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="Source" Value="{x:Null}">
+                                                            <Setter Property="Source" Value="/Assets/no-image.png"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
