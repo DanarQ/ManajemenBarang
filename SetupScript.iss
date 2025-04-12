@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Aplikasi Manajemen Barang Disporapar"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "DanarQusyairi" 
 #define MyAppURL "https://github.com/DanarQ" 
 #define MyAppExeName "ManajemenBarang.exe"
@@ -10,25 +10,28 @@
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{C1C2A3B4-D5E6-F7A8-B9C0-D1E2F3A4B5C6}} ; <-- Ganti dengan GUID baru jika mau
+AppId={{C1C2A3B4-D5E6-F7A8-B9C0-D1E2F3A4B5C6}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
-;DefaultGroupName={#MyAppName} ; Tidak direkomendasikan lagi
 DisableProgramGroupPage=yes
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
 OutputBaseFilename=Setup-ManajemenBarang-v{#MyAppVersion}
 SetupIconFile=AssetGambar/product.ico 
-Compression=lzma
+; Pengaturan kompresi yang lebih baik
+Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
+; Tambahan untuk versi 1.1
+CloseApplications=yes
+MinVersion=10.0
+PrivilegesRequired=admin
+; Pengaturan untuk backup/restore
+UsePreviousAppDir=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -36,16 +39,64 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-; Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
+; Main application files
 Source: "{#SourcePublishPath}{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePublishPath}*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Create empty AssetGambar folder if not exists
+Source: "{#SourcePublishPath}AssetGambar\*"; DestDir: "{app}\AssetGambar"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent 
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\AssetGambar"
+Type: dirifempty; Name: "{app}"
+
+[Code]
+var
+  BackupDir: string;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  AppDir: string;
+begin
+    BackupDir := ExpandConstant('{app}_backup');
+    AppDir := ExpandConstant('{app}');
+    
+    if CurStep = ssInstall then
+    begin
+        // Backup AssetGambar folder before installation
+        if DirExists(AppDir + '\AssetGambar') then
+        begin
+            if not DirExists(BackupDir) then
+                CreateDir(BackupDir);
+            
+            if DirExists(BackupDir) then
+                FileCopy(AppDir + '\AssetGambar\*', BackupDir + '\*', False);
+        end;
+    end;
+    
+    if CurStep = ssPostInstall then
+    begin
+        // Restore backed up files after installation
+        if DirExists(BackupDir) then
+        begin
+            CreateDir(AppDir + '\AssetGambar');
+            FileCopy(BackupDir + '\*', AppDir + '\AssetGambar\*', False);
+            DelTree(BackupDir, True, True, True);
+        end;
+    end;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+    Result := True;
+    // Tambahan pengecekan sebelum instalasi dimulai jika diperlukan
+end;
