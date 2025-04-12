@@ -18,3 +18,4 @@ D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\
 D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\ManajemenBarang\obj\Debug\net9.0-windows\ManajemenBarang.pdb
 D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\ManajemenBarang\obj\Debug\net9.0-windows\ManajemenBarang.genruntimeconfig.cache
 D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\ManajemenBarang\obj\Debug\net9.0-windows\ref\ManajemenBarang.dll
+D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\ManajemenBarang\obj\Debug\net9.0-windows\ManajemenBarang.sourcelink.json
