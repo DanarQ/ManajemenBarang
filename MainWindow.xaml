@@ -367,20 +367,24 @@
                             <DataGridTemplateColumn Header="Foto" Width="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}"
-                                               Width="80" Height="80" 
-                                               Stretch="Uniform"
-                                               RenderOptions.BitmapScalingMode="HighQuality">
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Style.Triggers>
-                                                        <Trigger Property="Source" Value="{x:Null}">
-                                                            <Setter Property="Source" Value="/Assets/no-image.png"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
+                                        <Border Width="80" Height="80" 
+                                                Background="White" 
+                                                BorderBrush="#E0E0E0" 
+                                                BorderThickness="1" 
+                                                CornerRadius="4"
+                                                ToolTip="Klik untuk melihat gambar lebih besar">
+                                            <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}"
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                   RenderOptions.EdgeMode="Aliased"
+                                                   Margin="4">
+                                                <Image.Effect>
+                                                    <DropShadowEffect ShadowDepth="0" 
+                                                                      BlurRadius="10" 
+                                                                      Opacity="0.2"/>
+                                                </Image.Effect>
+                                            </Image>
+                                        </Border>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>

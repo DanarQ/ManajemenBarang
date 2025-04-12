@@ -65,6 +65,18 @@ public partial class MainWindow : Window
         try
         {
             _daftarBarang = await _storageService.GetItemsAsync();
+            
+            // Debug: Print foto paths
+            foreach (var item in _daftarBarang)
+            {
+                System.Diagnostics.Debug.WriteLine($"Item {item.IdBarang} foto path: {item.FotoPath}");
+                if (!string.IsNullOrEmpty(item.FotoPath))
+                {
+                    string fullPath = Path.Combine(_storageService.ImagePath, item.FotoPath);
+                    System.Diagnostics.Debug.WriteLine($"Full path: {fullPath}, Exists: {File.Exists(fullPath)}");
+                }
+            }
+            
             dgBarang.ItemsSource = null;
             dgBarang.ItemsSource = _daftarBarang;
         }
