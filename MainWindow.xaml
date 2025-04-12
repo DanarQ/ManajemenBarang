@@ -63,6 +63,9 @@
             <Setter Property="Background" Value="#1976D2"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -98,6 +101,13 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Style untuk Button Pilih Foto -->
+        <Style x:Key="PhotoButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Width" Value="180"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="12"/>
         </Style>
 
         <!-- Style untuk Image Preview -->
@@ -386,7 +396,7 @@
                                     <!-- Button Area -->
                                     <Button x:Name="btnPilihFoto"
                                             Grid.Row="1"
-                                            Style="{StaticResource ModernButton}"
+                                            Style="{StaticResource PhotoButtonStyle}"
                                             Background="#1976D2"
                                             Content="📷 Pilih Foto"
                                             Click="BtnPilihFoto_Click"
@@ -438,7 +448,7 @@
                                             <!-- Button Area -->
                                             <Button x:Name="btnPilihFotoKondisiAwal"
                                                     Grid.Row="1"
-                                                    Style="{StaticResource ModernButton}"
+                                                    Style="{StaticResource PhotoButtonStyle}"
                                                     Background="#1976D2"
                                                     Content="📷 Pilih Foto Kondisi Awal"
                                                     Click="BtnPilihFotoKondisiAwal_Click"
@@ -491,7 +501,7 @@
                                             <!-- Button Area -->
                                             <Button x:Name="btnPilihFotoKondisiAkhir"
                                                     Grid.Row="1"
-                                                    Style="{StaticResource ModernButton}"
+                                                    Style="{StaticResource PhotoButtonStyle}"
                                                     Background="#1976D2"
                                                     Content="📷 Pilih Foto Kondisi Akhir"
                                                     Click="BtnPilihFotoKondisiAkhir_Click"
@@ -506,20 +516,20 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0">
                         <Button x:Name="btnBaru"
                                 Style="{StaticResource ModernButton}"
                                 Background="#43A047"
                                 Content="🆕 Baru"
                                 Click="BtnBaru_Click"
-                                Margin="0,0,10,0"/>
+                                Margin="0,0,15,0"/>
                         
                         <Button x:Name="btnSimpan"
                                 Style="{StaticResource ModernButton}"
                                 Background="#1E88E5"
                                 Content="💾 Simpan"
                                 Click="BtnSimpan_Click"
-                                Margin="0,0,10,0"/>
+                                Margin="0,0,15,0"/>
                         
                         <Button x:Name="btnHapus"
                                 Style="{StaticResource ModernButton}"
@@ -554,18 +564,35 @@
                         </Grid.ColumnDefinitions>
                         
                         <!-- Grid untuk overlay TextBox dan Placeholder -->
-                        <Grid Grid.Column="0" Margin="0,0,15,0">
-                            <TextBox x:Name="txtCari" 
-                                     TextChanged="TxtCari_TextChanged"/>
-                            <TextBlock Text="Cari ID, Nama, Merek, Pengguna..." 
-                                       Foreground="Gray" 
-                                       Padding="10,8" 
-                                       IsHitTestVisible="False" 
-                                       Visibility="{Binding Text.IsEmpty, ElementName=txtCari, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        </Grid>
+                        <Border Grid.Column="0" 
+                                Background="White"
+                                BorderBrush="#B0BEC5"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Margin="0,0,15,0">
+                            <Grid>
+                                <TextBox x:Name="txtCari" 
+                                         Height="35"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"
+                                         Padding="10,0"
+                                         TextChanged="TxtCari_TextChanged"/>
+                                <TextBlock Text="Cari ID, Nama, Merek, Pengguna..." 
+                                           Foreground="Gray" 
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False" 
+                                           Visibility="{Binding Text.IsEmpty, ElementName=txtCari, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
+                        </Border>
                         
-                        <Button x:Name="btnCari" Content="Cari" Grid.Column="1" 
-                                Style="{StaticResource ButtonCariStyle}"
+                        <Button x:Name="btnCari" 
+                                Grid.Column="1" 
+                                Style="{StaticResource ModernButton}"
+                                Height="35"
+                                Width="90"
+                                Content="🔍 Cari"
                                 Click="BtnCari_Click"/>
                     </Grid>
 
