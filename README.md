@@ -1,6 +1,7 @@
 ## 🚀 Perkembangan Terkini
 
 ### Versi 1.1.0 (Current)
+- Penambahan Fitur upload foto
 - Perbaikan bug pada sistem foto:
   - Fixed: Dialog konfirmasi yang tidak perlu saat membuat data baru
   - Fixed: Tombol foto yang tidak bisa diakses setelah konfirmasi
