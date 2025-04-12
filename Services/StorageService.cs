@@ -11,19 +11,27 @@ namespace ManajemenBarang.Services
     public class StorageService
     {
         public string FilePath { get; private set; }
+        public string ImagePath { get; private set; }
         
         public StorageService()
         {
             // Create a folder in the AppData local folder to store our data
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string directoryPath = Path.Combine(appDataPath, "ManajemenBarang");
+            string imagePath = Path.Combine(directoryPath, "Images");
             
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
             
+            if (!Directory.Exists(imagePath))
+            {
+                Directory.CreateDirectory(imagePath);
+            }
+            
             FilePath = Path.Combine(directoryPath, "items.json");
+            ImagePath = imagePath;
         }
         
         public async Task<List<Item>> GetItemsAsync()
@@ -93,9 +101,47 @@ namespace ManajemenBarang.Services
                 return false;
             }
             
+            // Hapus foto-foto terkait
+            var item = items[index];
+            if (!string.IsNullOrEmpty(item.FotoPath))
+            {
+                string fotoPath = Path.Combine(ImagePath, item.FotoPath);
+                if (File.Exists(fotoPath)) File.Delete(fotoPath);
+            }
+            if (!string.IsNullOrEmpty(item.KondisiAwalPath))
+            {
+                string kondisiAwalPath = Path.Combine(ImagePath, item.KondisiAwalPath);
+                if (File.Exists(kondisiAwalPath)) File.Delete(kondisiAwalPath);
+            }
+            if (!string.IsNullOrEmpty(item.KondisiAkhirPath))
+            {
+                string kondisiAkhirPath = Path.Combine(ImagePath, item.KondisiAkhirPath);
+                if (File.Exists(kondisiAkhirPath)) File.Delete(kondisiAkhirPath);
+            }
+            
             items.RemoveAt(index);
             await SaveItemsAsync(items);
             return true;
+        }
+
+        public string SaveImage(string sourceFilePath, string itemId, string type)
+        {
+            string fileName = $"{itemId}_{type}_{DateTime.Now:yyyyMMddHHmmss}{Path.GetExtension(sourceFilePath)}";
+            string destinationPath = Path.Combine(ImagePath, fileName);
+            
+            File.Copy(sourceFilePath, destinationPath, true);
+            return fileName;
+        }
+
+        public void DeleteImage(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return;
+            
+            string filePath = Path.Combine(ImagePath, fileName);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
         }
     }
 } 

@@ -19,6 +19,9 @@ using System.Text.Json;
 using System.Configuration;
 using System.Data;
 using System.Threading.Tasks;
+using WinForms = System.Windows.Forms;
+using Win32 = Microsoft.Win32;
+using MsgBox = System.Windows.MessageBox;
 
 namespace ManajemenBarang;
 
@@ -32,6 +35,9 @@ public partial class MainWindow : Window
     private Item? _selectedItem;
     private bool _isEditMode = false;
     private string _backupFolderPath;
+    private string? _currentFotoPath;
+    private string? _currentKondisiAwalPath;
+    private string? _currentKondisiAkhirPath;
 
     public MainWindow()
     {
@@ -44,6 +50,12 @@ public partial class MainWindow : Window
 
         LoadData();
         ClearInputs();
+        
+        // Menonaktifkan tombol pilih foto saat pertama kali
+        btnPilihFoto.IsEnabled = false;
+        btnPilihFotoKondisiAwal.IsEnabled = false;
+        btnPilihFotoKondisiAkhir.IsEnabled = false;
+        
         dpTanggalPerolehan.SelectedDate = DateTime.Now;
         dpTanggalPinjam.SelectedDate = DateTime.Now;
     }
@@ -58,7 +70,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Terjadi kesalahan saat memuat data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MsgBox.Show($"Terjadi kesalahan saat memuat data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -80,81 +92,99 @@ public partial class MainWindow : Window
         dpTanggalPinjam.SelectedDate = DateTime.Now;
         txtNamaPengguna.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
+        txtKeteranganKondisiAwal.Text = string.Empty;
+        txtKeteranganKondisiAkhir.Text = string.Empty;
+        
+        imgBarang.Source = null;
+        imgKondisiAwal.Source = null;
+        imgKondisiAkhir.Source = null;
+        
+        _currentFotoPath = null;
+        _currentKondisiAwalPath = null;
+        _currentKondisiAkhirPath = null;
         
         _selectedItem = null;
         _isEditMode = false;
         txtIdBarang.IsEnabled = true;
         btnHapus.IsEnabled = false;
+        
+        // Reset DataGrid selection
+        if (dgBarang.SelectedItem != null)
+        {
+            dgBarang.UnselectAll();
+        }
+        
+        txtNamaBarang.Focus();
     }
 
     private bool ValidateInputs()
     {
         if (string.IsNullOrWhiteSpace(txtIdBarang.Text))
         {
-            MessageBox.Show("No ID Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("No ID Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtIdBarang.Focus();
             return false;
         }
 
         if (!_isEditMode && _daftarBarang.Any(item => item.IdBarang == txtIdBarang.Text))
         {
-            MessageBox.Show($"ID Barang '{txtIdBarang.Text}' sudah digunakan. Harap gunakan ID lain.", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show($"ID Barang '{txtIdBarang.Text}' sudah digunakan. Harap gunakan ID lain.", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtIdBarang.Focus();
             return false;
         }
         
         if (!int.TryParse(txtIdBarang.Text, out _))
         {
-            MessageBox.Show("No ID Barang harus berupa angka!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("No ID Barang harus berupa angka!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtIdBarang.Focus();
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(txtNamaBarang.Text))
         {
-            MessageBox.Show("Nama Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Nama Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtNamaBarang.Focus();
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(txtMerekBarang.Text))
         {
-            MessageBox.Show("Merek Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Merek Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtMerekBarang.Focus();
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(txtHargaBarang.Text))
         {
-            MessageBox.Show("Harga Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Harga Barang harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtHargaBarang.Focus();
             return false;
         }
         else if (!decimal.TryParse(txtHargaBarang.Text, NumberStyles.Currency, CultureInfo.CurrentCulture, out _) &&
                  !decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
         {
-            MessageBox.Show("Harga Barang harus diisi dengan angka yang valid!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Harga Barang harus diisi dengan angka yang valid!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtHargaBarang.Focus();
             return false;
         }
 
         if (dpTanggalPerolehan.SelectedDate == null)
         {
-            MessageBox.Show("Tanggal Perolehan harus dipilih!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Tanggal Perolehan harus dipilih!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             dpTanggalPerolehan.Focus();
             return false;
         }
 
         if (dpTanggalPinjam.SelectedDate == null)
         {
-            MessageBox.Show("Tanggal Pinjam harus dipilih!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Tanggal Pinjam harus dipilih!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             dpTanggalPinjam.Focus();
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(txtNamaPengguna.Text))
         {
-            MessageBox.Show("Nama Pengguna harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Nama Pengguna harus diisi!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtNamaPengguna.Focus();
             return false;
         }
@@ -173,7 +203,7 @@ public partial class MainWindow : Window
             hargaBarang = parsedHargaInvariant;
         }
         
-        return new Item
+        var item = new Item
         {
             IdBarang = txtIdBarang.Text,
             NamaBarang = txtNamaBarang.Text,
@@ -182,8 +212,28 @@ public partial class MainWindow : Window
             TanggalPerolehan = dpTanggalPerolehan.SelectedDate ?? DateTime.Now,
             TanggalPinjam = dpTanggalPinjam.SelectedDate ?? DateTime.Now,
             NamaPengguna = txtNamaPengguna.Text,
-            KeteranganBarang = txtKeteranganBarang.Text
+            KeteranganBarang = txtKeteranganBarang.Text,
+            KeteranganKondisiAwal = txtKeteranganKondisiAwal.Text,
+            KeteranganKondisiAkhir = txtKeteranganKondisiAkhir.Text
         };
+
+        // Save images if selected
+        if (_currentFotoPath != null)
+        {
+            item.FotoPath = _storageService.SaveImage(_currentFotoPath, item.IdBarang, "foto");
+        }
+        
+        if (_currentKondisiAwalPath != null)
+        {
+            item.KondisiAwalPath = _storageService.SaveImage(_currentKondisiAwalPath, item.IdBarang, "kondisi_awal");
+        }
+        
+        if (_currentKondisiAkhirPath != null)
+        {
+            item.KondisiAkhirPath = _storageService.SaveImage(_currentKondisiAkhirPath, item.IdBarang, "kondisi_akhir");
+        }
+
+        return item;
     }
 
     private void SetInputsFromItem(Item item)
@@ -198,6 +248,47 @@ public partial class MainWindow : Window
         dpTanggalPinjam.SelectedDate = item.TanggalPinjam;
         txtNamaPengguna.Text = item.NamaPengguna;
         txtKeteranganBarang.Text = item.KeteranganBarang;
+        txtKeteranganKondisiAwal.Text = item.KeteranganKondisiAwal;
+        txtKeteranganKondisiAkhir.Text = item.KeteranganKondisiAkhir;
+        
+        // Reset all images and paths first
+        imgBarang.Source = null;
+        imgKondisiAwal.Source = null;
+        imgKondisiAkhir.Source = null;
+        _currentFotoPath = null;
+        _currentKondisiAwalPath = null;
+        _currentKondisiAkhirPath = null;
+        
+        // Load images if they exist
+        if (!string.IsNullOrEmpty(item.FotoPath))
+        {
+            string fullPath = Path.Combine(_storageService.ImagePath, item.FotoPath);
+            if (File.Exists(fullPath))
+            {
+                imgBarang.Source = new BitmapImage(new Uri(fullPath));
+                _currentFotoPath = fullPath;
+            }
+        }
+        
+        if (!string.IsNullOrEmpty(item.KondisiAwalPath))
+        {
+            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAwalPath);
+            if (File.Exists(fullPath))
+            {
+                imgKondisiAwal.Source = new BitmapImage(new Uri(fullPath));
+                _currentKondisiAwalPath = fullPath;
+            }
+        }
+        
+        if (!string.IsNullOrEmpty(item.KondisiAkhirPath))
+        {
+            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAkhirPath);
+            if (File.Exists(fullPath))
+            {
+                imgKondisiAkhir.Source = new BitmapImage(new Uri(fullPath));
+                _currentKondisiAkhirPath = fullPath;
+            }
+        }
         
         txtIdBarang.IsEnabled = false;
         btnHapus.IsEnabled = true;
@@ -206,82 +297,85 @@ public partial class MainWindow : Window
 
     private async void BtnSimpan_Click(object sender, RoutedEventArgs e)
     {
-        if (!ValidateInputs()) return;
+        if (!ValidateInputs())
+            return;
 
         try
         {
             var item = GetItemFromInputs();
-            bool success;
-
+            
             if (_isEditMode)
             {
-                success = await _storageService.UpdateItemAsync(item);
-                if (success)
+                // Update existing item
+                var existingItem = _daftarBarang.FirstOrDefault(i => i.IdBarang == item.IdBarang);
+                if (existingItem != null)
                 {
-                    MessageBox.Show("Data barang berhasil diperbarui!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
-                    _selectedItem = item;
-                }
-                else
-                {
-                    MessageBox.Show("Gagal memperbarui data barang!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
+                    int index = _daftarBarang.IndexOf(existingItem);
+                    _daftarBarang[index] = item;
                 }
             }
             else
             {
-                success = await _storageService.AddItemAsync(item);
-                if (success)
-                {
-                    MessageBox.Show("Data barang berhasil disimpan!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
-                    ClearInputs();
-                }
-                else
-                {
-                    MessageBox.Show("ID Barang sudah ada, gunakan ID yang lain!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+                // Add new item
+                _daftarBarang.Add(item);
             }
-
-            LoadData();
+            
+            await _storageService.SaveItemsAsync(_daftarBarang);
+            
+            // Refresh the DataGrid
+            dgBarang.ItemsSource = null;
+            dgBarang.ItemsSource = _daftarBarang;
+            
+            if (!_isEditMode)
+            {
+                MsgBox.Show("Data berhasil disimpan!", "Informasi", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Select the newly added/edited item
+                dgBarang.SelectedItem = _daftarBarang.FirstOrDefault(i => i.IdBarang == item.IdBarang);
+                _isEditMode = true;
+                txtIdBarang.IsEnabled = false;
+                btnHapus.IsEnabled = true;
+                
+                // Mengaktifkan tombol pilih foto setelah data disimpan
+                btnPilihFoto.IsEnabled = true;
+                btnPilihFotoKondisiAwal.IsEnabled = true;
+                btnPilihFotoKondisiAkhir.IsEnabled = true;
+            }
+            else
+            {
+                MsgBox.Show("Data berhasil diperbarui!", "Informasi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void BtnBaru_Click(object sender, RoutedEventArgs e)
     {
-        dgBarang.UnselectAll();
-        
-        _selectedItem = null;
-        _isEditMode = false;
-        
-        txtNamaBarang.Text = string.Empty;
-        txtMerekBarang.Text = string.Empty;
-        txtHargaBarang.Text = string.Empty;
-        dpTanggalPerolehan.SelectedDate = DateTime.Now;
-        dpTanggalPinjam.SelectedDate = DateTime.Now;
-        txtNamaPengguna.Text = string.Empty;
-        txtKeteranganBarang.Text = string.Empty;
-        
-        txtIdBarang.Text = GetNextId().ToString();
-        txtIdBarang.IsEnabled = true;
-        
-        btnHapus.IsEnabled = false;
-        
-        txtNamaBarang.Focus();
+        if (dgBarang.SelectedItem != null)
+        {
+            var result = MsgBox.Show("Apakah Anda yakin ingin membuat data baru? Data yang belum disimpan akan hilang.", "Konfirmasi", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.No)
+            {
+                return;
+            }
+        }
+        ClearInputs();
+        btnPilihFoto.IsEnabled = false;
+        btnPilihFotoKondisiAwal.IsEnabled = false;
+        btnPilihFotoKondisiAkhir.IsEnabled = false;
     }
 
     private async void BtnHapus_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedItem == null)
         {
-            MessageBox.Show("Silakan pilih barang yang akan dihapus!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("Silakan pilih barang yang akan dihapus!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        var result = MessageBox.Show($"Anda yakin ingin menghapus barang dengan ID {_selectedItem.IdBarang}?", 
+        var result = MsgBox.Show($"Anda yakin ingin menghapus barang dengan ID {_selectedItem.IdBarang}?", 
                                     "Konfirmasi", 
                                     MessageBoxButton.YesNo, 
                                     MessageBoxImage.Question);
@@ -293,18 +387,18 @@ public partial class MainWindow : Window
                 bool success = await _storageService.DeleteItemAsync(_selectedItem.IdBarang);
                 if (success)
                 {
-                    MessageBox.Show("Data barang berhasil dihapus!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MsgBox.Show("Data barang berhasil dihapus!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
                     ClearInputs();
                     LoadData();
                 }
                 else
                 {
-                    MessageBox.Show("Gagal menghapus data barang!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MsgBox.Show("Gagal menghapus data barang!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
@@ -315,6 +409,16 @@ public partial class MainWindow : Window
         if (_selectedItem != null)
         {
             SetInputsFromItem(_selectedItem);
+            btnPilihFoto.IsEnabled = true;
+            btnPilihFotoKondisiAwal.IsEnabled = true;
+            btnPilihFotoKondisiAkhir.IsEnabled = true;
+        }
+        else
+        {
+            ClearInputs();
+            btnPilihFoto.IsEnabled = false;
+            btnPilihFotoKondisiAwal.IsEnabled = false;
+            btnPilihFotoKondisiAkhir.IsEnabled = false;
         }
     }
 
@@ -381,12 +485,11 @@ public partial class MainWindow : Window
         try
         {
             int backupNumber = 1;
-            string fileNamePattern = "backup_*_*.json";
-            var existingBackups = Directory.GetFiles(_backupFolderPath, fileNamePattern);
-            if (existingBackups.Length > 0)
+            var existingBackupFolders = Directory.GetDirectories(_backupFolderPath, "backup_*_*");
+            if (existingBackupFolders.Length > 0)
             {
-                var lastBackupNumber = existingBackups
-                    .Select(f => Path.GetFileNameWithoutExtension(f).Split('_')[1])
+                var lastBackupNumber = existingBackupFolders
+                    .Select(f => Path.GetFileName(f).Split('_')[1])
                     .Where(n => int.TryParse(n, out _))
                     .Select(int.Parse)
                     .OrderByDescending(n => n)
@@ -395,71 +498,210 @@ public partial class MainWindow : Window
             }
 
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            string backupFileName = $"backup_{backupNumber}_{timestamp}.json";
-            string backupFilePath = Path.Combine(_backupFolderPath, backupFileName);
-
+            
+            // Buat folder khusus untuk backup ini
+            string backupFolderName = $"backup_{backupNumber}_{timestamp}";
+            string backupFolderPath = Path.Combine(_backupFolderPath, backupFolderName);
+            Directory.CreateDirectory(backupFolderPath);
+            
+            // Backup file JSON
+            string backupFileName = "data.json";
+            string backupFilePath = Path.Combine(backupFolderPath, backupFileName);
             string sourceFilePath = _storageService.FilePath;
 
             if (File.Exists(sourceFilePath))
             {
+                // Copy file JSON
                 File.Copy(sourceFilePath, backupFilePath);
-                MessageBox.Show($"Data berhasil di-backup ke:\n{backupFilePath}", "Backup Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                // Buat folder untuk gambar
+                string backupImagesPath = Path.Combine(backupFolderPath, "Images");
+                Directory.CreateDirectory(backupImagesPath);
+                
+                // Copy semua gambar dari folder Images
+                string sourceImagesPath = _storageService.ImagePath;
+                if (Directory.Exists(sourceImagesPath))
+                {
+                    foreach (string imageFile in Directory.GetFiles(sourceImagesPath))
+                    {
+                        string fileName = Path.GetFileName(imageFile);
+                        string destImagePath = Path.Combine(backupImagesPath, fileName);
+                        File.Copy(imageFile, destImagePath);
+                    }
+                }
+                
+                MsgBox.Show($"Data dan gambar berhasil di-backup ke:\n{backupFolderPath}", 
+                               "Backup Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                MessageBox.Show("File data utama (items.json) tidak ditemukan. Backup dibatalkan.", "Backup Gagal", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MsgBox.Show("File data utama (items.json) tidak ditemukan. Backup dibatalkan.", 
+                               "Backup Gagal", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Terjadi kesalahan saat backup: {ex.Message}", "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MsgBox.Show($"Terjadi kesalahan saat backup: {ex.Message}", 
+                           "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private async void BtnLoad_Click(object sender, RoutedEventArgs e)
     {
-        OpenFileDialog openFileDialog = new OpenFileDialog
+        var folderBrowserDialog = new WinForms.FolderBrowserDialog
         {
-            InitialDirectory = _backupFolderPath,
-            Filter = "JSON backup files (*.json)|*.json",
-            Title = "Pilih File Backup untuk Dimuat"
+            Description = "Pilih folder backup yang akan di-restore",
+            UseDescriptionForTitle = true,
+            SelectedPath = _backupFolderPath
         };
 
-        if (openFileDialog.ShowDialog() == true)
+        if (folderBrowserDialog.ShowDialog() == WinForms.DialogResult.OK)
         {
-            string selectedBackupPath = openFileDialog.FileName;
+            string selectedBackupFolderPath = folderBrowserDialog.SelectedPath;
+            string backupDataFile = Path.Combine(selectedBackupFolderPath, "data.json");
+            string backupImagesPath = Path.Combine(selectedBackupFolderPath, "Images");
 
-            var result = MessageBox.Show("Memuat backup akan menimpa data saat ini.\nAnda yakin ingin melanjutkan?",
-                                         "Konfirmasi Load Backup",
-                                         MessageBoxButton.YesNo,
-                                         MessageBoxImage.Warning);
+            if (!File.Exists(backupDataFile))
+            {
+                MsgBox.Show("File data.json tidak ditemukan di folder backup!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
-            if (result == MessageBoxResult.Yes)
+            if (!Directory.Exists(backupImagesPath))
+            {
+                var result = MsgBox.Show("Folder Images tidak ditemukan di backup. Lanjutkan tanpa memulihkan gambar?", "Peringatan", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result == MessageBoxResult.No)
+                {
+                    return;
+                }
+            }
+
+            var confirmLoadResult = MsgBox.Show("Memuat backup akan menimpa data dan gambar saat ini.\nAnda yakin ingin melanjutkan?",
+                                                "Konfirmasi Load Backup",
+                                                MessageBoxButton.YesNo,
+                                                MessageBoxImage.Warning);
+
+            if (confirmLoadResult == MessageBoxResult.Yes)
             {
                 try
                 {
-                    string json = await File.ReadAllTextAsync(selectedBackupPath);
+                    // Load data JSON
+                    string json = await File.ReadAllTextAsync(backupDataFile);
                     var backupItems = JsonSerializer.Deserialize<List<Item>>(json);
 
                     if (backupItems != null)
                     {
+                        // Clear current images from UI
+                        imgBarang.Source = null;
+                        imgKondisiAwal.Source = null;
+                        imgKondisiAkhir.Source = null;
+                        
+                        // Force garbage collection to release file handles
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        
+                        // Salin data JSON
                         await _storageService.SaveItemsAsync(backupItems);
+                        
+                        // Salin gambar jika folder gambar backup ada
+                        if (Directory.Exists(backupImagesPath))
+                        {
+                            try
+                            {
+                                // Hapus semua file gambar lama
+                                foreach (string imageFile in Directory.GetFiles(_storageService.ImagePath))
+                                {
+                                    try
+                                    {
+                                        File.Delete(imageFile);
+                                    }
+                                    catch (IOException)
+                                    {
+                                        // If file is locked, try to force delete
+                                        GC.Collect();
+                                        GC.WaitForPendingFinalizers();
+                                        File.Delete(imageFile);
+                                    }
+                                }
+                                
+                                // Salin semua gambar dari backup
+                                foreach (string imageFile in Directory.GetFiles(backupImagesPath))
+                                {
+                                    string fileName = Path.GetFileName(imageFile);
+                                    string destImagePath = Path.Combine(_storageService.ImagePath, fileName);
+                                    File.Copy(imageFile, destImagePath);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MsgBox.Show($"Terjadi kesalahan saat memproses file gambar: {ex.Message}\nProses restore data tetap dilanjutkan.", 
+                                    "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            }
+                        }
 
                         LoadData();
                         ClearInputs();
 
-                        MessageBox.Show("Data berhasil dimuat dari backup.", "Load Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MsgBox.Show("Data dan gambar berhasil dimuat dari backup.", 
+                                      "Load Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else
                     {
-                        MessageBox.Show("File backup tidak valid atau kosong.", "Load Gagal", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MsgBox.Show("File backup tidak valid atau kosong.", 
+                                      "Load Gagal", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Terjadi kesalahan saat load backup: {ex.Message}", "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MsgBox.Show($"Terjadi kesalahan saat load backup: {ex.Message}", 
+                                  "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+    }
+
+    private void BtnPilihFoto_Click(object sender, RoutedEventArgs e)
+    {
+        var openFileDialog = new Win32.OpenFileDialog
+        {
+            Filter = "Image files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png",
+            Title = "Pilih foto barang"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            _currentFotoPath = openFileDialog.FileName;
+            imgBarang.Source = new BitmapImage(new Uri(_currentFotoPath));
+        }
+    }
+
+    private void BtnPilihFotoKondisiAwal_Click(object sender, RoutedEventArgs e)
+    {
+        var openFileDialog = new Win32.OpenFileDialog
+        {
+            Filter = "Image files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png",
+            Title = "Pilih Foto Kondisi Awal"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            _currentKondisiAwalPath = openFileDialog.FileName;
+            imgKondisiAwal.Source = new BitmapImage(new Uri(_currentKondisiAwalPath));
+        }
+    }
+
+    private void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
+    {
+        var openFileDialog = new Win32.OpenFileDialog
+        {
+            Filter = "Image files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png",
+            Title = "Pilih Foto Kondisi Akhir"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            _currentKondisiAkhirPath = openFileDialog.FileName;
+            imgKondisiAkhir.Source = new BitmapImage(new Uri(_currentKondisiAkhirPath));
         }
     }
 }

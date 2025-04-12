@@ -3,13 +3,14 @@ using System.Data;
 using System.Globalization;
 using System.Threading;
 using System.Windows;
+using WinForms = System.Windows.Forms;
 
 namespace ManajemenBarang;
 
 /// <summary>
 /// Interaction logic for App.xaml
 /// </summary>
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {

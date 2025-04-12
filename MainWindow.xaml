@@ -4,11 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ManajemenBarang"
+        xmlns:converters="clr-namespace:ManajemenBarang.Converters"
         mc:Ignorable="d"
         Title="Aplikasi Manajemen Barang" Height="700" Width="1100"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
+        <!-- Tambahkan konverter untuk path gambar -->
+        <converters:ImagePathConverter x:Key="ImagePathConverter"/>
+        
         <!-- Style untuk TextBox dengan Focus Visual -->
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="8"/>
@@ -228,6 +232,60 @@
                                      TextWrapping="Wrap"
                                      AcceptsReturn="True"
                                      VerticalScrollBarVisibility="Auto"/>
+
+                            <TextBlock Text="Foto Barang" Margin="0,20,0,10"/>
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="150" Height="150" Background="#F5F5F5" Margin="0,0,10,0">
+                                    <Image x:Name="imgBarang" Stretch="Uniform"/>
+                                </Border>
+                                <Button x:Name="btnPilihFoto" Content="Pilih Foto" 
+                                        Grid.Column="1" Style="{StaticResource ButtonCariStyle}"
+                                        Click="BtnPilihFoto_Click"/>
+                            </Grid>
+
+                            <Expander Header="Dokumentasi Kondisi" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <!-- Kondisi Awal -->
+                                    <TextBlock Text="Kondisi Awal" Margin="0,10,0,10"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="150" Height="150" Background="#F5F5F5" Margin="0,0,10,0">
+                                            <Image x:Name="imgKondisiAwal" Stretch="Uniform"/>
+                                        </Border>
+                                        <Button x:Name="btnPilihFotoKondisiAwal" Content="Pilih Foto" 
+                                                Grid.Column="1" Style="{StaticResource ButtonCariStyle}"
+                                                Click="BtnPilihFotoKondisiAwal_Click"/>
+                                    </Grid>
+                                    <TextBlock Text="Keterangan Kondisi Awal" Margin="0,0,0,10"/>
+                                    <TextBox x:Name="txtKeteranganKondisiAwal" Height="60" TextWrapping="Wrap" 
+                                             AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+
+                                    <!-- Kondisi Akhir -->
+                                    <TextBlock Text="Kondisi Akhir" Margin="0,20,0,10"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="150" Height="150" Background="#F5F5F5" Margin="0,0,10,0">
+                                            <Image x:Name="imgKondisiAkhir" Stretch="Uniform"/>
+                                        </Border>
+                                        <Button x:Name="btnPilihFotoKondisiAkhir" Content="Pilih Foto" 
+                                                Grid.Column="1" Style="{StaticResource ButtonCariStyle}"
+                                                Click="BtnPilihFotoKondisiAkhir_Click"/>
+                                    </Grid>
+                                    <TextBlock Text="Keterangan Kondisi Akhir" Margin="0,0,0,10"/>
+                                    <TextBox x:Name="txtKeteranganKondisiAkhir" Height="60" TextWrapping="Wrap" 
+                                             AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                                </StackPanel>
+                            </Expander>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -306,6 +364,15 @@
                             <DataGridTextColumn Header="Tanggal Pinjam" Binding="{Binding TanggalPinjam, StringFormat='dd/MM/yyyy'}" Width="120"/>
                             <DataGridTextColumn Header="Pengguna" Binding="{Binding NamaPengguna}" Width="150"/>
                             <DataGridTextColumn Header="Keterangan" Binding="{Binding KeteranganBarang}" Width="*"/>
+                            <DataGridTemplateColumn Header="Foto" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}" 
+                                               Height="50" Width="50" 
+                                               Stretch="Uniform"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
