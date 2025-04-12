@@ -572,16 +572,19 @@
                                 Margin="0,0,15,0">
                             <Grid>
                                 <TextBox x:Name="txtCari" 
-                                         Height="35"
+                                         Height="30"
                                          Background="Transparent"
                                          BorderThickness="0"
                                          VerticalContentAlignment="Center"
+                                         VerticalAlignment="Center"
                                          Padding="10,0"
+                                         Margin="0"
                                          TextChanged="TxtCari_TextChanged"/>
                                 <TextBlock Text="Cari ID, Nama, Merek, Pengguna..." 
                                            Foreground="Gray" 
                                            Margin="10,0,0,0"
                                            VerticalAlignment="Center"
+                                           HorizontalAlignment="Left"
                                            IsHitTestVisible="False" 
                                            Visibility="{Binding Text.IsEmpty, ElementName=txtCari, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </Grid>
@@ -590,7 +593,7 @@
                         <Button x:Name="btnCari" 
                                 Grid.Column="1" 
                                 Style="{StaticResource ModernButton}"
-                                Height="35"
+                                Height="30"
                                 Width="90"
                                 Content="🔍 Cari"
                                 Click="BtnCari_Click"/>

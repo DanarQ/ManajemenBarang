@@ -51,7 +51,7 @@ public partial class MainWindow : Window
         _backupFolderPath = Path.Combine(appDataPath, "ManajemenBarang", "Backups");
         Directory.CreateDirectory(_backupFolderPath);
 
-        LoadData();
+        _ = LoadData();
         ClearInputs();
         
         // Menonaktifkan tombol pilih foto saat pertama kali
@@ -63,7 +63,7 @@ public partial class MainWindow : Window
         dpTanggalPinjam.SelectedDate = DateTime.Now;
     }
 
-    private async void LoadData()
+    private async Task LoadData()
     {
         try
         {
@@ -113,6 +113,7 @@ public partial class MainWindow : Window
         imgBarang.Source = null;
         imgKondisiAwal.Source = null;
         imgKondisiAkhir.Source = null;
+        noImagePlaceholder.Visibility = Visibility.Visible;
         noImagePlaceholderKondisiAwal.Visibility = Visibility.Visible;
         noImagePlaceholderKondisiAkhir.Visibility = Visibility.Visible;
         
@@ -124,6 +125,11 @@ public partial class MainWindow : Window
         _isEditMode = false;
         txtIdBarang.IsEnabled = true;
         btnHapus.IsEnabled = false;
+        
+        // Enable photo buttons for new data
+        btnPilihFoto.IsEnabled = true;
+        btnPilihFotoKondisiAwal.IsEnabled = true;
+        btnPilihFotoKondisiAkhir.IsEnabled = true;
         
         // Reset DataGrid selection
         if (dgBarang.SelectedItem != null)
@@ -177,8 +183,8 @@ public partial class MainWindow : Window
             txtHargaBarang.Focus();
             return false;
         }
-        else if (!decimal.TryParse(txtHargaBarang.Text, NumberStyles.Currency, CultureInfo.CurrentCulture, out _) &&
-                 !decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+        
+        if (!decimal.TryParse(txtHargaBarang.Text.Replace("Rp", "").Replace(".", "").Replace(",", "").Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out _))
         {
             MsgBox.Show("Harga Barang harus diisi dengan angka yang valid!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtHargaBarang.Focus();
@@ -214,7 +220,8 @@ public partial class MainWindow : Window
         if (!ValidateInputs()) return null;
 
         decimal hargaBarang;
-        if (!decimal.TryParse(txtHargaBarang.Text.Replace(",", ""), out hargaBarang))
+        string hargaText = txtHargaBarang.Text.Replace("Rp", "").Replace(".", "").Replace(",", "").Trim();
+        if (!decimal.TryParse(hargaText, NumberStyles.Any, CultureInfo.InvariantCulture, out hargaBarang))
         {
             MsgBox.Show("Harga barang harus berupa angka.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             return null;
@@ -392,9 +399,6 @@ public partial class MainWindow : Window
             }
         }
         ClearInputs();
-        btnPilihFoto.IsEnabled = false;
-        btnPilihFotoKondisiAwal.IsEnabled = false;
-        btnPilihFotoKondisiAkhir.IsEnabled = false;
     }
 
     private async void BtnHapus_Click(object sender, RoutedEventArgs e)
@@ -419,7 +423,7 @@ public partial class MainWindow : Window
                 {
                     MsgBox.Show("Data barang berhasil dihapus!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
                     ClearInputs();
-                    LoadData();
+                    await LoadData();
                 }
                 else
                 {
@@ -485,23 +489,30 @@ public partial class MainWindow : Window
 
     private void TxtHargaBarang_LostFocus(object sender, RoutedEventArgs e)
     {
-        if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal harga))
+        if (string.IsNullOrWhiteSpace(txtHargaBarang.Text))
+            return;
+
+        string hargaText = txtHargaBarang.Text.Replace("Rp", "").Replace(".", "").Replace(",", "").Trim();
+        if (decimal.TryParse(hargaText, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal harga))
         {
-            txtHargaBarang.Text = harga.ToString("C0", CultureInfo.CurrentCulture);
+            txtHargaBarang.Text = string.Format(CultureInfo.CreateSpecificCulture("id-ID"), "Rp {0:N0}", harga);
         }
-        else if (!string.IsNullOrWhiteSpace(txtHargaBarang.Text))
+        else
         {
-            // Jika input tidak valid, kosongkan atau berikan pesan
-            // txtHargaBarang.Text = string.Empty; // Option 1: Kosongkan
-            // MessageBox.Show("Format harga tidak valid.", "Error"); // Option 2: Tampilkan pesan
+            txtHargaBarang.Text = string.Empty;
+            MsgBox.Show("Format harga tidak valid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void TxtHargaBarang_GotFocus(object sender, RoutedEventArgs e)
     {
-        if (decimal.TryParse(txtHargaBarang.Text, NumberStyles.Currency, CultureInfo.CurrentCulture, out decimal harga))
+        if (string.IsNullOrWhiteSpace(txtHargaBarang.Text))
+            return;
+
+        string hargaText = txtHargaBarang.Text.Replace("Rp", "").Replace(".", "").Replace(",", "").Trim();
+        if (decimal.TryParse(hargaText, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal harga))
         {
-            txtHargaBarang.Text = harga.ToString("N0", CultureInfo.InvariantCulture);
+            txtHargaBarang.Text = harga.ToString(CultureInfo.InvariantCulture);
         }
     }
 
@@ -578,49 +589,55 @@ public partial class MainWindow : Window
 
     private async void BtnLoad_Click(object sender, RoutedEventArgs e)
     {
-        var folderBrowserDialog = new WinForms.FolderBrowserDialog
+        try
         {
-            Description = "Pilih folder backup yang akan di-restore",
-            UseDescriptionForTitle = true,
-            SelectedPath = _backupFolderPath
-        };
-
-        if (folderBrowserDialog.ShowDialog() == WinForms.DialogResult.OK)
-        {
-            string selectedBackupFolderPath = folderBrowserDialog.SelectedPath;
-            string backupDataFile = Path.Combine(selectedBackupFolderPath, "data.json");
-            string backupImagesPath = Path.Combine(selectedBackupFolderPath, "Images");
-
-            if (!File.Exists(backupDataFile))
+            var folderBrowserDialog = new WinForms.FolderBrowserDialog
             {
-                MsgBox.Show("File data.json tidak ditemukan di folder backup!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+                Description = "Pilih folder backup yang akan di-restore",
+                UseDescriptionForTitle = true,
+                SelectedPath = _backupFolderPath
+            };
 
-            if (!Directory.Exists(backupImagesPath))
+            if (folderBrowserDialog.ShowDialog() == WinForms.DialogResult.OK)
             {
-                var result = MsgBox.Show("Folder Images tidak ditemukan di backup. Lanjutkan tanpa memulihkan gambar?", "Peringatan", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (result == MessageBoxResult.No)
+                string selectedBackupFolderPath = folderBrowserDialog.SelectedPath;
+                string backupDataFile = Path.Combine(selectedBackupFolderPath, "data.json");
+                string backupImagesPath = Path.Combine(selectedBackupFolderPath, "Images");
+
+                if (!File.Exists(backupDataFile))
                 {
+                    MsgBox.Show("File data.json tidak ditemukan di folder backup!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-            }
 
-            var confirmLoadResult = MsgBox.Show("Memuat backup akan menimpa data dan gambar saat ini.\nAnda yakin ingin melanjutkan?",
-                                                "Konfirmasi Load Backup",
-                                                MessageBoxButton.YesNo,
-                                                MessageBoxImage.Warning);
-
-            if (confirmLoadResult == MessageBoxResult.Yes)
-            {
-                try
+                if (!Directory.Exists(backupImagesPath))
                 {
-                    // Load data JSON
-                    string json = await File.ReadAllTextAsync(backupDataFile);
-                    var backupItems = JsonSerializer.Deserialize<List<Item>>(json);
-
-                    if (backupItems != null)
+                    var result = MsgBox.Show("Folder Images tidak ditemukan di backup. Lanjutkan tanpa memulihkan gambar?", "Peringatan", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (result == MessageBoxResult.No)
                     {
+                        return;
+                    }
+                }
+
+                var confirmLoadResult = MsgBox.Show("Memuat backup akan menimpa data dan gambar saat ini.\nAnda yakin ingin melanjutkan?",
+                                                    "Konfirmasi Load Backup",
+                                                    MessageBoxButton.YesNo,
+                                                    MessageBoxImage.Warning);
+
+                if (confirmLoadResult == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        // Load data JSON
+                        string json = await File.ReadAllTextAsync(backupDataFile);
+                        var backupItems = JsonSerializer.Deserialize<List<Item>>(json);
+
+                        if (backupItems == null)
+                        {
+                            MsgBox.Show("File backup tidak valid atau kosong.", "Load Gagal", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+
                         // Clear current images from UI
                         imgBarang.Source = null;
                         imgKondisiAwal.Source = null;
@@ -629,6 +646,9 @@ public partial class MainWindow : Window
                         // Force garbage collection to release file handles
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
+
+                        // Ensure AssetGambar directory exists
+                        Directory.CreateDirectory(_storageService.ImagePath);
                         
                         // Salin data JSON
                         await _storageService.SaveItemsAsync(backupItems);
@@ -639,18 +659,21 @@ public partial class MainWindow : Window
                             try
                             {
                                 // Hapus semua file gambar lama
-                                foreach (string imageFile in Directory.GetFiles(_storageService.ImagePath))
+                                if (Directory.Exists(_storageService.ImagePath))
                                 {
-                                    try
+                                    foreach (string imageFile in Directory.GetFiles(_storageService.ImagePath))
                                     {
-                                        File.Delete(imageFile);
-                                    }
-                                    catch (IOException)
-                                    {
-                                        // If file is locked, try to force delete
-                                        GC.Collect();
-                                        GC.WaitForPendingFinalizers();
-                                        File.Delete(imageFile);
+                                        try
+                                        {
+                                            File.Delete(imageFile);
+                                        }
+                                        catch (IOException)
+                                        {
+                                            // If file is locked, try to force delete
+                                            GC.Collect();
+                                            GC.WaitForPendingFinalizers();
+                                            File.Delete(imageFile);
+                                        }
                                     }
                                 }
                                 
@@ -659,7 +682,7 @@ public partial class MainWindow : Window
                                 {
                                     string fileName = Path.GetFileName(imageFile);
                                     string destImagePath = Path.Combine(_storageService.ImagePath, fileName);
-                                    File.Copy(imageFile, destImagePath);
+                                    File.Copy(imageFile, destImagePath, true);
                                 }
                             }
                             catch (Exception ex)
@@ -669,24 +692,23 @@ public partial class MainWindow : Window
                             }
                         }
 
-                        LoadData();
+                        await LoadData();
                         ClearInputs();
 
                         MsgBox.Show("Data dan gambar berhasil dimuat dari backup.", 
-                                      "Load Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                                  "Load Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        MsgBox.Show("File backup tidak valid atau kosong.", 
-                                      "Load Gagal", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MsgBox.Show($"Terjadi kesalahan saat load backup: {ex.Message}", 
+                        MsgBox.Show($"Terjadi kesalahan saat load backup: {ex.Message}", 
                                   "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
