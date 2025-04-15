@@ -1,2 +1,0 @@
-D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\ManajemenBarang\bin\Release\net9.0-windows\win-x64\publish\ManajemenBarang.pdb
-D:\Pemrograman\C#\WInUi\AplikasiBaranfDisproraparTestAI\AplikasiManajemenBarang\ManajemenBarang\bin\Release\net9.0-windows\win-x64\publish\ManajemenBarang.exe
