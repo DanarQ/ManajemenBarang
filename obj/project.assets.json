@@ -1,11 +1,70 @@
 {
   "version": 3,
   "targets": {
-    "net9.0-windows7.0": {}
+    "net9.0-windows7.0": {
+      "Material.Icons/2.3.1": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Material.Icons.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Material.Icons.dll": {}
+        }
+      },
+      "Material.Icons.WPF/2.3.1": {
+        "type": "package",
+        "dependencies": {
+          "Material.Icons": "2.3.1"
+        },
+        "compile": {
+          "lib/net9.0-windows7.0/Material.Icons.WPF.dll": {}
+        },
+        "runtime": {
+          "lib/net9.0-windows7.0/Material.Icons.WPF.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.WindowsDesktop.App.WPF"
+        ]
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "Material.Icons/2.3.1": {
+      "sha512": "4gc0Qt+HxoTr6LzYVhbUQIV7pmhe7A/vPPnWudNdIi+ENVZ0yN27ImG3MdScI2Smdtq5aBIMfQrFQaKwdj2ckg==",
+      "type": "package",
+      "path": "material.icons/2.3.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/netstandard2.0/Material.Icons.dll",
+        "material.icons.2.3.1.nupkg.sha512",
+        "material.icons.nuspec"
+      ]
+    },
+    "Material.Icons.WPF/2.3.1": {
+      "sha512": "P5CA5XOnunl5QqwS2cOvuKTJnFfI1lDhZqVxmsUgKnxFpQ0rEEfIh7DaPa0WgGwEQcZoZrbhzNlvbAALWN8RJQ==",
+      "type": "package",
+      "path": "material.icons.wpf/2.3.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net461/Material.Icons.WPF.dll",
+        "lib/net6.0-windows7.0/Material.Icons.WPF.dll",
+        "lib/net7.0-windows7.0/Material.Icons.WPF.dll",
+        "lib/net8.0-windows7.0/Material.Icons.WPF.dll",
+        "lib/net9.0-windows7.0/Material.Icons.WPF.dll",
+        "lib/netcoreapp3.1/Material.Icons.WPF.dll",
+        "material.icons.wpf.2.3.1.nupkg.sha512",
+        "material.icons.wpf.nuspec"
+      ]
+    }
+  },
   "projectFileDependencyGroups": {
-    "net9.0-windows7.0": []
+    "net9.0-windows7.0": [
+      "Material.Icons.WPF >= 2.3.1"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\ASUS\\.nuget\\packages\\": {},
@@ -56,6 +115,12 @@
     "frameworks": {
       "net9.0-windows7.0": {
         "targetAlias": "net9.0-windows",
+        "dependencies": {
+          "Material.Icons.WPF": {
+            "target": "Package",
+            "version": "[2.3.1, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

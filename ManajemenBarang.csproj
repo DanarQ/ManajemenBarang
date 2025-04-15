@@ -20,4 +20,8 @@
     </Resource>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Material.Icons.WPF" Version="2.3.1" />
+  </ItemGroup>
+
 </Project>

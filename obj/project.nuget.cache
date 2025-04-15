@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "qNBHoNezhxs=",
+  "dgSpecHash": "yNQk0tlU960=",
   "success": true,
   "projectFilePath": "D:\\Pemrograman\\C#\\WInUi\\AplikasiBaranfDisproraparTestAI\\AplikasiManajemenBarang\\ManajemenBarang\\ManajemenBarang.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\ASUS\\.nuget\\packages\\material.icons\\2.3.1\\material.icons.2.3.1.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\material.icons.wpf\\2.3.1\\material.icons.wpf.2.3.1.nupkg.sha512"
+  ],
   "logs": []
 }

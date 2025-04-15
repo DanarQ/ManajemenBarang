@@ -101,7 +101,8 @@ public partial class MainWindow : Window
 
     private void ClearInputs()
     {
-        txtIdBarang.Text = GetNextId().ToString();
+        // Reset all text inputs
+        txtIdBarang.Text = string.Empty;
         txtNamaBarang.Text = string.Empty;
         txtMerekBarang.Text = string.Empty;
         txtHargaBarang.Text = string.Empty;
@@ -110,9 +111,16 @@ public partial class MainWindow : Window
         txtNamaPengguna.Text = string.Empty;
         txtBidang.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
-        txtKeteranganKondisiAwal.Text = string.Empty;
-        txtKeteranganKondisiAkhir.Text = string.Empty;
         
+        // Clear image paths
+        _selectedImagePath = null;
+        _selectedKondisiAwalPath = null;
+        _selectedKondisiAkhirPath = null;
+        _currentFotoPath = null;
+        _currentKondisiAwalPath = null;
+        _currentKondisiAkhirPath = null;
+        
+        // Reset image controls
         imgBarang.Source = null;
         imgKondisiAwal.Source = null;
         imgKondisiAkhir.Source = null;
@@ -120,20 +128,15 @@ public partial class MainWindow : Window
         noImagePlaceholderKondisiAwal.Visibility = Visibility.Visible;
         noImagePlaceholderKondisiAkhir.Visibility = Visibility.Visible;
         
-        _currentFotoPath = null;
-        _currentKondisiAwalPath = null;
-        _currentKondisiAkhirPath = null;
-        _selectedImagePath = null;
-        _selectedKondisiAwalPath = null;
-        _selectedKondisiAkhirPath = null;
-        _currentEditingId = null;
-        
-        _selectedItem = null;
+        // Reset state flags
         _isEditMode = false;
-        txtIdBarang.IsEnabled = true;
-        btnHapus.IsEnabled = false;
+        _currentEditingId = null;
+        _selectedItem = null;
         
-        // Enable photo buttons for new data
+        // Enable ID field for new items
+        txtIdBarang.IsEnabled = true;
+        
+        // Make sure photo buttons are enabled
         btnPilihFoto.IsEnabled = true;
         btnPilihFotoKondisiAwal.IsEnabled = true;
         btnPilihFotoKondisiAkhir.IsEnabled = true;
@@ -224,76 +227,94 @@ public partial class MainWindow : Window
 
     private Item GetItemFromInputs()
     {
-        if (!ValidateInputs()) return null;
+        // Validasi input
+        ValidateInputs();
 
-        decimal hargaBarang;
-        string hargaText = txtHargaBarang.Text.Replace("Rp", "").Replace(".", "").Replace(",", "").Trim();
-        if (!decimal.TryParse(hargaText, NumberStyles.Any, CultureInfo.InvariantCulture, out hargaBarang))
-        {
-            MsgBox.Show("Harga barang harus berupa angka.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            return null;
-        }
+        // Ambil data dari input
+        var idBarang = txtIdBarang.Text.Trim();
+        var namaBarang = txtNamaBarang.Text.Trim();
+        var merekBarang = txtMerekBarang.Text.Trim();
+        var hargaBarang = decimal.Parse(txtHargaBarang.Text.Replace(".", "").Replace(",", "").Replace("Rp", "").Trim());
+        var tanggalPembelian = dpTanggalPerolehan.SelectedDate;
+        var tanggalPinjam = dpTanggalPinjam.SelectedDate;
+        var namaPengguna = txtNamaPengguna.Text.Trim();
+        var bidang = txtBidang.Text.Trim();
+        var keteranganBarang = txtKeteranganBarang.Text.Trim();
 
+        // Buat objek barang baru
         var item = new Item
         {
-            IdBarang = txtIdBarang.Text,
-            NamaBarang = txtNamaBarang.Text,
-            MerekBarang = txtMerekBarang.Text,
+            IdBarang = idBarang,
+            NamaBarang = namaBarang,
+            MerekBarang = merekBarang,
             HargaBarang = hargaBarang,
-            TanggalPerolehan = dpTanggalPerolehan.SelectedDate ?? DateTime.Now,
-            TanggalPinjam = dpTanggalPinjam.SelectedDate ?? DateTime.Now,
-            NamaPengguna = txtNamaPengguna.Text,
-            Bidang = txtBidang.Text,
-            KeteranganBarang = txtKeteranganBarang.Text,
-            KeteranganKondisiAwal = txtKeteranganKondisiAwal.Text,
-            KeteranganKondisiAkhir = txtKeteranganKondisiAkhir.Text
+            TanggalPerolehan = tanggalPembelian ?? DateTime.Now,
+            TanggalPinjam = tanggalPinjam ?? DateTime.Now,
+            NamaPengguna = namaPengguna,
+            KeteranganBarang = keteranganBarang,
+            Bidang = bidang
         };
 
-        // If editing, preserve photo paths 
-        if (_isEditMode)
+        // Jika edit mode, gunakan foto yang sudah ada jika tidak ada pilihan foto baru
+        if (_isEditMode && _selectedItem != null)
         {
-            // If no new photo is selected, keep the current path
-            if (string.IsNullOrEmpty(_selectedImagePath))
+            // Use the original ID when saving images in edit mode
+            string originalId = _currentEditingId ?? idBarang;
+            
+            // Untuk foto utama
+            if (_selectedImagePath != null)
             {
-                item.FotoPath = _currentFotoPath;
+                // SaveImage returns the fileName, not a FileInfo
+                var fileName = _storageService.SaveImage(_selectedImagePath, originalId, "foto");
+                item.FotoPath = fileName;
             }
-            // If no new kondisi awal photo is selected, keep the current path
-            if (string.IsNullOrEmpty(_selectedKondisiAwalPath))
+            else
             {
-                item.KondisiAwalPath = _currentKondisiAwalPath;
+                item.FotoPath = _selectedItem.FotoPath;
             }
-            // If no new kondisi akhir photo is selected, keep the current path
-            if (string.IsNullOrEmpty(_selectedKondisiAkhirPath))
+
+            // Untuk foto kondisi awal
+            if (_selectedKondisiAwalPath != null)
             {
-                item.KondisiAkhirPath = _currentKondisiAkhirPath;
+                var fileName = _storageService.SaveImage(_selectedKondisiAwalPath, originalId, "kondisi_awal");
+                item.KondisiAwalPath = fileName;
+            }
+            else
+            {
+                item.KondisiAwalPath = _selectedItem.KondisiAwalPath;
+            }
+
+            // Untuk foto kondisi akhir
+            if (_selectedKondisiAkhirPath != null)
+            {
+                var fileName = _storageService.SaveImage(_selectedKondisiAkhirPath, originalId, "kondisi_akhir");
+                item.KondisiAkhirPath = fileName;
+            }
+            else
+            {
+                item.KondisiAkhirPath = _selectedItem.KondisiAkhirPath;
             }
         }
-
-        // Handle main photo - only if a new photo is selected
-        if (!string.IsNullOrEmpty(_selectedImagePath))
+        else
         {
-            string fileName = $"{item.IdBarang}_{DateTime.Now:yyyyMMddHHmmss}.jpg";
-            string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
-            File.Copy(_selectedImagePath, destinationPath, true);
-            item.FotoPath = fileName;
-        }
+            // Mode tambah baru
+            if (_selectedImagePath != null)
+            {
+                var fileName = _storageService.SaveImage(_selectedImagePath, idBarang, "foto");
+                item.FotoPath = fileName;
+            }
 
-        // Handle kondisi awal photo - only if a new photo is selected
-        if (!string.IsNullOrEmpty(_selectedKondisiAwalPath))
-        {
-            string fileName = $"{item.IdBarang}_kondisi_awal_{DateTime.Now:yyyyMMddHHmmss}.jpg";
-            string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
-            File.Copy(_selectedKondisiAwalPath, destinationPath, true);
-            item.KondisiAwalPath = fileName;
-        }
+            if (_selectedKondisiAwalPath != null)
+            {
+                var fileName = _storageService.SaveImage(_selectedKondisiAwalPath, idBarang, "kondisi_awal");
+                item.KondisiAwalPath = fileName;
+            }
 
-        // Handle kondisi akhir photo - only if a new photo is selected
-        if (!string.IsNullOrEmpty(_selectedKondisiAkhirPath))
-        {
-            string fileName = $"{item.IdBarang}_kondisi_akhir_{DateTime.Now:yyyyMMddHHmmss}.jpg";
-            string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
-            File.Copy(_selectedKondisiAkhirPath, destinationPath, true);
-            item.KondisiAkhirPath = fileName;
+            if (_selectedKondisiAkhirPath != null)
+            {
+                var fileName = _storageService.SaveImage(_selectedKondisiAkhirPath, idBarang, "kondisi_akhir");
+                item.KondisiAkhirPath = fileName;
+            }
         }
 
         return item;
@@ -303,23 +324,13 @@ public partial class MainWindow : Window
     {
         if (item == null) return;
 
-        // Reset selected image paths when switching to a different item
-        if (_currentEditingId != item.IdBarang)
-        {
-            // Reset selected paths
-            _selectedImagePath = null;
-            _selectedKondisiAwalPath = null;
-            _selectedKondisiAkhirPath = null;
-            
-            // Store the current item ID
-            _currentEditingId = item.IdBarang;
-            
-            // Store the current photo paths from the item
-            _currentFotoPath = item.FotoPath;
-            _currentKondisiAwalPath = item.KondisiAwalPath;
-            _currentKondisiAkhirPath = item.KondisiAkhirPath;
-        }
-
+        // Store current item data for reference
+        _currentFotoPath = item.FotoPath;
+        _currentKondisiAwalPath = item.KondisiAwalPath;
+        _currentKondisiAkhirPath = item.KondisiAkhirPath;
+        
+        // Don't reset anything based on _currentEditingId
+        // Just populate the form with current item data
         txtIdBarang.Text = item.IdBarang;
         txtNamaBarang.Text = item.NamaBarang;
         txtMerekBarang.Text = item.MerekBarang;
@@ -329,8 +340,6 @@ public partial class MainWindow : Window
         txtNamaPengguna.Text = item.NamaPengguna;
         txtBidang.Text = item.Bidang;
         txtKeteranganBarang.Text = item.KeteranganBarang;
-        txtKeteranganKondisiAwal.Text = item.KeteranganKondisiAwal;
-        txtKeteranganKondisiAkhir.Text = item.KeteranganKondisiAkhir;
 
         // Reset all images first
         imgBarang.Source = null;
@@ -343,7 +352,7 @@ public partial class MainWindow : Window
         // Load main photo if it exists
         if (!string.IsNullOrEmpty(item.FotoPath))
         {
-            string fullPath = Path.Combine(_storageService.AssetGambarPath, item.FotoPath);
+            string fullPath = Path.Combine(_storageService.ImagePath, item.FotoPath);
             if (File.Exists(fullPath))
             {
                 imgBarang.Source = new BitmapImage(new Uri(fullPath));
@@ -354,7 +363,7 @@ public partial class MainWindow : Window
         // Load kondisi awal photo if it exists
         if (!string.IsNullOrEmpty(item.KondisiAwalPath))
         {
-            string fullPath = Path.Combine(_storageService.AssetGambarPath, item.KondisiAwalPath);
+            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAwalPath);
             if (File.Exists(fullPath))
             {
                 imgKondisiAwal.Source = new BitmapImage(new Uri(fullPath));
@@ -365,7 +374,7 @@ public partial class MainWindow : Window
         // Load kondisi akhir photo if it exists
         if (!string.IsNullOrEmpty(item.KondisiAkhirPath))
         {
-            string fullPath = Path.Combine(_storageService.AssetGambarPath, item.KondisiAkhirPath);
+            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAkhirPath);
             if (File.Exists(fullPath))
             {
                 imgKondisiAkhir.Source = new BitmapImage(new Uri(fullPath));
@@ -374,63 +383,73 @@ public partial class MainWindow : Window
         }
 
         txtIdBarang.IsEnabled = false;
-        btnHapus.IsEnabled = true;
         _isEditMode = true;
     }
 
     private async void BtnSimpan_Click(object sender, RoutedEventArgs e)
     {
-        if (!ValidateInputs())
-            return;
-
         try
         {
+            // Get item from inputs
             var item = GetItemFromInputs();
-            
-            if (_isEditMode)
+            if (item == null)
+            {
+                return;
+            }
+
+            // Update existing or add new item
+            if (_isEditMode && _currentEditingId != null)
             {
                 // Update existing item
-                var existingItem = _daftarBarang.FirstOrDefault(i => i.IdBarang == item.IdBarang);
-                if (existingItem != null)
+                var existingItemIndex = _daftarBarang.FindIndex(i => i.IdBarang == _currentEditingId);
+                if (existingItemIndex >= 0)
                 {
-                    int index = _daftarBarang.IndexOf(existingItem);
-                    _daftarBarang[index] = item;
+                    // Make sure to keep the original ID for proper referencing in the list
+                    item.IdBarang = _currentEditingId;
+                    _daftarBarang[existingItemIndex] = item;
+                    MsgBox.Show("Data barang berhasil diupdate.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             else
             {
                 // Add new item
                 _daftarBarang.Add(item);
+                MsgBox.Show("Data barang berhasil disimpan.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            
+
+            // Save data to file
             await _storageService.SaveItemsAsync(_daftarBarang);
-            
-            // Refresh the DataGrid
+
+            // Refresh DataGrid
             dgBarang.ItemsSource = null;
             dgBarang.ItemsSource = _daftarBarang;
+
+            // Reset fields and selected image paths
+            ClearInputs();
+            _selectedImagePath = null;
+            _selectedKondisiAwalPath = null;
+            _selectedKondisiAkhirPath = null;
+            _currentFotoPath = null;
+            _currentKondisiAwalPath = null;
+            _currentKondisiAkhirPath = null;
+            _isEditMode = false;
+            _currentEditingId = null;
+            _selectedItem = null;
+
+            // Reset image placeholders
+            imgBarang.Source = null;
+            imgKondisiAwal.Source = null;
+            imgKondisiAkhir.Source = null;
+            noImagePlaceholder.Visibility = Visibility.Visible;
+            noImagePlaceholderKondisiAwal.Visibility = Visibility.Visible;
+            noImagePlaceholderKondisiAkhir.Visibility = Visibility.Visible;
             
-            if (!_isEditMode)
-            {
-                MsgBox.Show("Data berhasil disimpan!", "Informasi", MessageBoxButton.OK, MessageBoxImage.Information);
-                // Select the newly added/edited item
-                dgBarang.SelectedItem = _daftarBarang.FirstOrDefault(i => i.IdBarang == item.IdBarang);
-                _isEditMode = true;
-                txtIdBarang.IsEnabled = false;
-                btnHapus.IsEnabled = true;
-                
-                // Mengaktifkan tombol pilih foto setelah data disimpan
-                btnPilihFoto.IsEnabled = true;
-                btnPilihFotoKondisiAwal.IsEnabled = true;
-                btnPilihFotoKondisiAkhir.IsEnabled = true;
-            }
-            else
-            {
-                MsgBox.Show("Data berhasil diperbarui!", "Informasi", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            // Switch to list tab
+            tabControl.SelectedIndex = 0;
         }
         catch (Exception ex)
         {
-            MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MsgBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -446,8 +465,6 @@ public partial class MainWindow : Window
                txtNamaPengguna.Text != _selectedItem.NamaPengguna ||
                txtBidang.Text != _selectedItem.Bidang ||
                txtKeteranganBarang.Text != _selectedItem.KeteranganBarang ||
-               txtKeteranganKondisiAwal.Text != _selectedItem.KeteranganKondisiAwal ||
-               txtKeteranganKondisiAkhir.Text != _selectedItem.KeteranganKondisiAkhir ||
                !string.IsNullOrEmpty(_selectedImagePath) ||
                !string.IsNullOrEmpty(_selectedKondisiAwalPath) ||
                !string.IsNullOrEmpty(_selectedKondisiAkhirPath);
@@ -512,20 +529,59 @@ public partial class MainWindow : Window
 
     private void DgBarang_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        _selectedItem = dgBarang.SelectedItem as Item;
-        if (_selectedItem != null)
+        // When the selection changes, we need to properly clear everything first
+        
+        // Clear the selected paths to prevent old paths from being used
+        _selectedImagePath = null;
+        _selectedKondisiAwalPath = null;
+        _selectedKondisiAkhirPath = null;
+        
+        // Clear image previews
+        imgBarang.Source = null;
+        imgKondisiAwal.Source = null;
+        imgKondisiAkhir.Source = null;
+        
+        // Enable photo selection buttons
+        btnPilihFoto.IsEnabled = true;
+        btnPilihFotoKondisiAwal.IsEnabled = true;
+        btnPilihFotoKondisiAkhir.IsEnabled = true;
+
+        // Get the newly selected item
+        Item selectedItem = dgBarang.SelectedItem as Item;
+        if (selectedItem != null)
         {
-            SetInputsFromItem(_selectedItem);
-            btnPilihFoto.IsEnabled = true;
-            btnPilihFotoKondisiAwal.IsEnabled = true;
-            btnPilihFotoKondisiAkhir.IsEnabled = true;
+            try
+            {
+                // Clear the previous selected item and store the new one properly
+                _selectedItem = selectedItem;
+                
+                // Store the ID for editing
+                _currentEditingId = selectedItem.IdBarang;
+                
+                // Use SetInputsFromItem to populate the UI
+                SetInputsFromItem(selectedItem);
+                
+                // Set edit mode flag
+                _isEditMode = true;
+                
+                // Enable buttons that require a selection
+                btnSimpan.IsEnabled = true;
+                btnHapus.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                MsgBox.Show($"Error loading item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         else
         {
-            ClearInputs();
-            btnPilihFoto.IsEnabled = false;
-            btnPilihFotoKondisiAwal.IsEnabled = false;
-            btnPilihFotoKondisiAkhir.IsEnabled = false;
+            // No selection, reset everything
+            _isEditMode = false;
+            _currentEditingId = null;
+            _selectedItem = null;
+            
+            // Disable buttons that require a selection
+            btnHapus.IsEnabled = false;
         }
     }
 
@@ -785,73 +841,60 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void BtnPilihFoto_Click(object sender, RoutedEventArgs e)
-    {
-        var file = await PilihFoto(sender);
-        if (file != null)
-        {
-            imgBarang.Source = new BitmapImage(new Uri(file.FullName));
-            noImagePlaceholder.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    private async void BtnPilihFotoKondisiAwal_Click(object sender, RoutedEventArgs e)
-    {
-        var file = await PilihFoto(sender);
-        if (file != null)
-        {
-            imgKondisiAwal.Source = new BitmapImage(new Uri(file.FullName));
-            noImagePlaceholderKondisiAwal.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    private async void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
-    {
-        var file = await PilihFoto(sender);
-        if (file != null)
-        {
-            imgKondisiAkhir.Source = new BitmapImage(new Uri(file.FullName));
-            noImagePlaceholderKondisiAkhir.Visibility = Visibility.Collapsed;
-        }
-    }
-
     private async Task<FileInfo?> PilihFoto(object sender)
     {
-        var openFileDialog = new Microsoft.Win32.OpenFileDialog
+        try
         {
-            Title = "Pilih Foto",
-            Filter = "Image files (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|All files (*.*)|*.*",
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)
-        };
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Pilih Foto",
+                Filter = "Image files (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|All files (*.*)|*.*",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)
+            };
 
-        if (openFileDialog.ShowDialog() == true)
-        {
-            try
+            if (openFileDialog.ShowDialog() == true)
             {
                 var file = new FileInfo(openFileDialog.FileName);
                 if (file.Exists)
                 {
-                    // Use sender parameter instead of FocusManager to determine which button was clicked
+                    // Clear previous selection first to avoid carrying over old selections
                     if (sender == btnPilihFoto)
                     {
                         _selectedImagePath = file.FullName;
+                        
+                        // Update UI
+                        var image = new BitmapImage(new Uri(file.FullName));
+                        imgBarang.Source = image;
+                        noImagePlaceholder.Visibility = Visibility.Collapsed;
                     }
                     else if (sender == btnPilihFotoKondisiAwal)
                     {
                         _selectedKondisiAwalPath = file.FullName;
+                        
+                        // Update UI
+                        var image = new BitmapImage(new Uri(file.FullName));
+                        imgKondisiAwal.Source = image; 
+                        noImagePlaceholderKondisiAwal.Visibility = Visibility.Collapsed;
                     }
                     else if (sender == btnPilihFotoKondisiAkhir)
                     {
                         _selectedKondisiAkhirPath = file.FullName;
+                        
+                        // Update UI
+                        var image = new BitmapImage(new Uri(file.FullName));
+                        imgKondisiAkhir.Source = image;
+                        noImagePlaceholderKondisiAkhir.Visibility = Visibility.Collapsed;
                     }
+                    
                     return file;
                 }
             }
-            catch (Exception ex)
-            {
-                MsgBox.Show($"Error accessing file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
+        catch (Exception ex)
+        {
+            MsgBox.Show($"Error selecting image: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        
         return null;
     }
 
@@ -933,5 +976,33 @@ public partial class MainWindow : Window
                 }
             }
         }
+    }
+
+    private void DgBarang_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        // Periksa apakah ada item yang dipilih di DataGrid
+        if (dgBarang.SelectedItem is Item selectedItem)
+        {
+            // Set form berdasarkan item yang dipilih
+            SetInputsFromItem(selectedItem);
+            
+            // Beralih ke tab form untuk edit barang
+            tabControl.SelectedIndex = 1;
+        }
+    }
+
+    private async void BtnPilihFoto_Click(object sender, RoutedEventArgs e)
+    {
+        await PilihFoto(sender);
+    }
+
+    private async void BtnPilihFotoKondisiAwal_Click(object sender, RoutedEventArgs e)
+    {
+        await PilihFoto(sender);
+    }
+
+    private async void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
+    {
+        await PilihFoto(sender);
     }
 }
