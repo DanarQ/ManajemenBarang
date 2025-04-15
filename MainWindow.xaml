@@ -1,0 +1,834 @@
+﻿<Window x:Class="ManajemenBarang.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ManajemenBarang"
+        xmlns:converters="clr-namespace:ManajemenBarang.Converters"
+        xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+        mc:Ignorable="d"
+        Title="Aplikasi Manajemen Barang" Height="700" Width="1100"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <!-- Tambahkan konverter untuk path gambar -->
+        <converters:ImagePathConverter x:Key="ImagePathConverter"/>
+        
+        <!-- Style untuk TextBox dengan animasi dan visual feedback -->
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="BorderBrush" Value="#B0BEC5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                            Margin="{TemplateBinding Padding}"
+                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                <TextBlock x:Name="Placeholder"
+                                         Text="{TemplateBinding Tag}"
+                                         Foreground="#999999"
+                                         Margin="{TemplateBinding Padding}"
+                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                         Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter Property="Visibility" Value="Visible" TargetName="Placeholder"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#1976D2" TargetName="border"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#1976D2" TargetName="border"/>
+                                <Setter Property="BorderThickness" Value="2" TargetName="border"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style untuk Button dengan animasi -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter x:Name="contentPresenter"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect ShadowDepth="1" 
+                                                         BlurRadius="4" 
+                                                         Opacity="0.3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D47A1"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style untuk Button Pilih Foto -->
+        <Style x:Key="PhotoButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Width" Value="180"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <!-- Style untuk Image Preview -->
+        <Style x:Key="ImagePreviewBorder" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="1" 
+                                     BlurRadius="4" 
+                                     Opacity="0.2"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Style untuk TextBox dengan Focus Visual -->
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="BorderBrush" Value="#B0BEC5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#1976D2"/>
+                    <Setter Property="BorderThickness" Value="1.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Style untuk DatePicker -->
+         <Style TargetType="DatePicker">
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,0"/> <!-- Padding disesuaikan -->
+        </Style>
+
+        <!-- Style Tombol Dasar -->
+        <Style x:Key="BaseButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Width" Value="110"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="0,0,15,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+                 <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.6"/>
+                    <Setter Property="Cursor" Value="No"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style Tombol spesifik (mewarisi BaseButtonStyle) -->
+        <Style x:Key="ButtonBaruStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#1E88E5"/>
+        </Style>
+        <Style x:Key="ButtonSimpanStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+        <Style x:Key="ButtonHapusStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#E53935"/>
+             <Setter Property="Margin" Value="0"/> <!-- Hapus margin kanan untuk tombol terakhir -->
+        </Style>
+         <Style x:Key="ButtonCariStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#1976D2"/>
+             <Setter Property="Width" Value="90"/>
+             <Setter Property="Height" Value="35"/>
+             <Setter Property="Margin" Value="0"/> <!-- Hapus margin kanan untuk tombol terakhir -->
+        </Style>
+        
+        <!-- Style untuk Cell DataGrid -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                 <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Padding="{TemplateBinding Padding}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <!-- Tambahkan Style baru untuk tombol Header di Window.Resources -->
+        <Style x:Key="HeaderButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#42A5F5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style untuk memperbesar Calendar di dalam DatePicker -->
+        <Style x:Key="EnlargedCalendarStyle" TargetType="Calendar">
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.3" ScaleY="1.3"/> <!-- Perbesar 20% -->
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style untuk sidebar button -->
+        <Style x:Key="SidebarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,14"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="LeftIndicator" 
+                                    Width="4" 
+                                    HorizontalAlignment="Left" 
+                                    Background="#42A5F5" 
+                                    Visibility="Collapsed"
+                                    CornerRadius="0,2,2,0"/>
+                            <Border x:Name="MainBorder" 
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Margin="0,2">
+                                <ContentPresenter x:Name="contentPresenter"
+                                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                VerticalAlignment="Center" 
+                                                Margin="0,0,0,0"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1565C0" TargetName="MainBorder"/>
+                                <Setter Property="Visibility" Value="Visible" TargetName="LeftIndicator"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D47A1" TargetName="MainBorder"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TabItem}}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" TargetName="LeftIndicator"/>
+                                <Setter Property="Background" Value="#1565C0" TargetName="MainBorder"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Style untuk sidebar header -->
+        <Style x:Key="SidebarHeaderStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#90CAF9"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="15,25,15,8"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Background="#1976D2" Grid.Row="0" Padding="15,10"> <!-- Sesuaikan Padding -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="APLIKASI MANAJEMEN BARANG DISPORAPAR" 
+                           Grid.Column="0"
+                           FontSize="26" 
+                           FontWeight="Bold" 
+                           Foreground="White" 
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="btnBackup" 
+                            Style="{StaticResource HeaderButtonStyle}"
+                            Click="BtnBackup_Click" Margin="0,0,10,0"
+                            ToolTip="Buat salinan cadangan data saat ini">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,5,0" />
+                            <TextBlock Text="Backup" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="btnLoad"
+                            Style="{StaticResource HeaderButtonStyle}"
+                            Click="BtnLoad_Click"
+                            ToolTip="Muat data dari file backup">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Kind="FolderOpen" Width="18" Height="18" Margin="0,0,5,0" />
+                            <TextBlock Text="Load" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content with Sidebar -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/> <!-- Sidebar width -->
+                <ColumnDefinition Width="*"/>   <!-- Content width -->
+            </Grid.ColumnDefinitions>
+            
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="#0D47A1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Logo Area -->
+                    <Border Grid.Row="0" Background="#0A3D8F" Padding="15,20">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <materialIcons:MaterialIcon Kind="FolderAccount" Width="24" Height="24" Foreground="White" Margin="0,0,10,0"/>
+                            <TextBlock Text="MANAJEMEN BARANG" 
+                                      Foreground="White" 
+                                      FontWeight="Bold" 
+                                      FontSize="16"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Menu Items -->
+                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                        <TextBlock Text="MENU" Style="{StaticResource SidebarHeaderStyle}"/>
+                        
+                        <Button x:Name="btnListBarang" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Click="BtnListBarang_Click"
+                                Tag="0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="ViewList" Width="22" Height="22" Margin="0,0,12,0" />
+                                <TextBlock Text="Daftar Barang" />
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button x:Name="btnTambahBarang" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Click="BtnTambahBarang_Click"
+                                Tag="1">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="Plus" Width="22" Height="22" Margin="0,0,12,0" />
+                                <TextBlock Text="Tambah Barang" />
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button x:Name="btnEditBarang" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Click="BtnEditBarang_Click"
+                                Tag="1">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="Edit" Width="22" Height="22" Margin="0,0,12,0" />
+                                <TextBlock Text="Edit Barang" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    
+                    <!-- Footer Info -->
+                    <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#1565C0">
+                        <StackPanel Margin="0,15,0,20">
+                            <TextBlock Text="INFORMASI" Style="{StaticResource SidebarHeaderStyle}"/>
+                            
+                            <Border Margin="15,8,15,8" Background="#093679" CornerRadius="4" Padding="10">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <materialIcons:MaterialIcon Kind="Information" Width="16" Height="16" Foreground="#90CAF9"/>
+                                        <TextBlock Text="VERSI APLIKASI" FontSize="11" Foreground="#90CAF9" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Manajemen Barang v1.1" 
+                                              Foreground="White" 
+                                              FontSize="12" 
+                                              Margin="0,0,0,5"/>
+                                    <TextBlock Text="© 2025 Disporapar" 
+                                              Foreground="#B3E5FC" 
+                                              FontSize="11"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+            
+            <!-- Content Area - TabControl -->
+            <TabControl x:Name="tabControl" 
+                       Grid.Column="1" 
+                       BorderThickness="0"
+                       Background="#F5F5F5"
+                       Padding="0">
+                <!-- Tab untuk Daftar Barang -->
+                <TabItem Header="Daftar Barang" Visibility="Collapsed">
+                    <Grid Margin="15">
+                        <!-- Search Box Area -->
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Search Box and Button -->
+                        <Grid Grid.Row="0" Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox x:Name="txtCari" 
+                                    Grid.Column="0"
+                                    Height="30"
+                                    FontSize="13"
+                                    Padding="10,0"
+                                    VerticalContentAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    TextChanged="TxtCari_TextChanged"
+                                    Tag="Cari berdasarkan ID, nama, atau merek..."
+                                    Margin="0,0,10,0"/>
+                            
+                            <Button x:Name="btnCari" 
+                                    Grid.Column="1"
+                                    Style="{StaticResource ButtonCariStyle}"
+                                    Click="BtnCari_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialIcons:MaterialIcon Kind="Magnify" Width="18" Height="18" Margin="0,0,5,0" />
+                                    <TextBlock Text="Cari" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        
+                        <!-- DataGrid -->
+                        <DataGrid x:Name="dgBarang" 
+                                 Grid.Row="1"
+                                 AutoGenerateColumns="False"
+                                 IsReadOnly="True"
+                                 SelectionMode="Single"
+                                 BorderThickness="1"
+                                 BorderBrush="#E0E0E0"
+                                 Background="White"
+                                 RowBackground="White"
+                                 AlternatingRowBackground="#F5F5F5"
+                                 CanUserAddRows="False"
+                                 CanUserDeleteRows="False"
+                                 CanUserReorderColumns="False"
+                                 CanUserResizeRows="False"
+                                 GridLinesVisibility="All"
+                                 HeadersVisibility="All"
+                                 MouseDoubleClick="DgBarang_MouseDoubleClick"
+                                 SelectionChanged="DgBarang_SelectionChanged">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID Barang" Binding="{Binding IdBarang}" Width="100"/>
+                                <DataGridTextColumn Header="Nama Barang" Binding="{Binding NamaBarang}" Width="150"/>
+                                <DataGridTextColumn Header="Merek" Binding="{Binding MerekBarang}" Width="150"/>
+                                <DataGridTextColumn Header="Harga" Binding="{Binding HargaBarang, StringFormat={}{0:N0}}" Width="120"/>
+                                <DataGridTextColumn Header="Tanggal Perolehan" Binding="{Binding TanggalPerolehan, StringFormat={}{0:dd/MM/yyyy}}" Width="130"/>
+                                <DataGridTextColumn Header="Tanggal Pinjam" Binding="{Binding TanggalPinjam, StringFormat={}{0:dd/MM/yyyy}}" Width="130"/>
+                                <DataGridTextColumn Header="Pengguna" Binding="{Binding NamaPengguna}" Width="150"/>
+                                <DataGridTextColumn Header="Bidang" Binding="{Binding Bidang}" Width="120"/>
+                                <DataGridTemplateColumn Header="Foto" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Source="{Binding FotoPath, Converter={StaticResource ImagePathConverter}}" 
+                                                   Width="80" Height="60" Stretch="Uniform"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="5"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Aksi" Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Click="BtnHapusItem_Click"
+                                                    Background="#E53935"
+                                                    Foreground="White"
+                                                    Width="40" Height="30" 
+                                                    Margin="5" 
+                                                    Padding="0"
+                                                    BorderThickness="0"
+                                                    ToolTip="Hapus item ini"
+                                                    Tag="{Binding IdBarang}">
+                                                <materialIcons:MaterialIcon Kind="DeleteOutline" Width="20" Height="20" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+                
+                <!-- Tab untuk Form -->
+                <TabItem Header="Form Barang" Visibility="Collapsed">
+                    <Grid Margin="15">
+                        <Border Background="#E3F2FD" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="Form Input Data Barang" 
+                                           FontSize="20" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,20" 
+                                           Grid.Row="0"/>
+
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="No ID Barang" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtIdBarang" 
+                                                 Style="{StaticResource ModernTextBox}"
+                                                 Tag="Masukkan ID Barang"/>
+
+                                        <TextBlock Text="Nama Barang" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtNamaBarang"
+                                                 Style="{StaticResource ModernTextBox}"
+                                                 Tag="Masukkan Nama Barang"/>
+
+                                        <TextBlock Text="Merek Barang" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtMerekBarang"
+                                                 Style="{StaticResource ModernTextBox}"
+                                                 Tag="Masukkan Merek Barang"/>
+
+                                        <TextBlock Text="Harga Barang" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtHargaBarang"
+                                                 Style="{StaticResource ModernTextBox}"
+                                                 Tag="Masukkan Harga Barang"
+                                                 LostFocus="TxtHargaBarang_LostFocus"
+                                                 GotFocus="TxtHargaBarang_GotFocus"/>
+
+                                        <TextBlock Text="Tanggal Perolehan" Margin="0,0,0,10"/>
+                                        <DatePicker x:Name="dpTanggalPerolehan"
+                                                    PreviewTextInput="DatePicker_PreviewTextInput"/>
+
+                                        <TextBlock Text="Tanggal Peminjaman" Margin="0,0,0,10"/>
+                                        <DatePicker x:Name="dpTanggalPinjam"
+                                                    PreviewTextInput="DatePicker_PreviewTextInput"/>
+
+                                        <TextBlock Text="Nama Pengguna" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtNamaPengguna"/>
+
+                                        <TextBlock Text="Bidang" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtBidang"
+                                                 Style="{StaticResource ModernTextBox}"
+                                                 Tag="Masukkan Bidang (mis. Keuangan, Olahraga)"/>
+
+                                        <TextBlock Text="Keterangan Barang" Margin="0,0,0,10"/>
+                                        <TextBox x:Name="txtKeteranganBarang"
+                                                 Height="100"
+                                                 TextWrapping="Wrap"
+                                                 AcceptsReturn="True"
+                                                 VerticalScrollBarVisibility="Auto"/>
+
+                                        <TextBlock Text="Foto Barang" Margin="0,20,0,10"/>
+                                        <Border Style="{StaticResource ImagePreviewBorder}"
+                                                Height="200"
+                                                Background="#F5F5F5">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Preview Area -->
+                                                <Border Grid.Row="0" 
+                                                        Background="White" 
+                                                        BorderBrush="#E0E0E0"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Margin="0,0,0,10">
+                                                    <Grid>
+                                                        <Image x:Name="imgBarang" 
+                                                               Stretch="Uniform"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"
+                                                               Margin="8"/>
+                                                        
+                                                        <!-- Placeholder when no image -->
+                                                        <StackPanel x:Name="noImagePlaceholder"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center">
+                                                            <TextBlock Text="📷"
+                                                                       FontSize="32"
+                                                                       Foreground="#BDBDBD"
+                                                                       HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Belum ada foto"
+                                                                       Foreground="#757575"
+                                                                       Margin="0,5,0,0"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Button Area -->
+                                                <Button x:Name="btnPilihFoto"
+                                                        Grid.Row="1"
+                                                        Style="{StaticResource PhotoButtonStyle}"
+                                                        Click="BtnPilihFoto_Click"
+                                                        HorizontalAlignment="Stretch">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <materialIcons:MaterialIcon Kind="Camera" Width="18" Height="18" Margin="0,0,5,0" />
+                                                        <TextBlock Text="Pilih Foto" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <Expander Header="Dokumentasi Kondisi" Margin="0,0,0,20">
+                                            <StackPanel>
+                                                <!-- Kondisi Awal -->
+                                                <TextBlock Text="Kondisi Awal" Margin="0,10,0,10"/>
+                                                <Border Style="{StaticResource ImagePreviewBorder}"
+                                                        Height="200"
+                                                        Background="#F5F5F5">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- Preview Area -->
+                                                        <Border Grid.Row="0" 
+                                                                Background="White" 
+                                                                BorderBrush="#E0E0E0"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4"
+                                                                Margin="0,0,0,10">
+                                                            <Grid>
+                                                                <Image x:Name="imgKondisiAwal" 
+                                                                       Stretch="Uniform"
+                                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                                       Margin="8"/>
+                                                                
+                                                                <!-- Placeholder when no image -->
+                                                                <StackPanel x:Name="noImagePlaceholderKondisiAwal"
+                                                                            HorizontalAlignment="Center"
+                                                                            VerticalAlignment="Center">
+                                                                    <TextBlock Text="📷"
+                                                                               FontSize="32"
+                                                                               Foreground="#BDBDBD"
+                                                                               HorizontalAlignment="Center"/>
+                                                                    <TextBlock Text="Belum ada foto kondisi awal"
+                                                                               Foreground="#757575"
+                                                                               Margin="0,5,0,0"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+
+                                                        <!-- Button Area -->
+                                                        <Button x:Name="btnPilihFotoKondisiAwal"
+                                                                Grid.Row="1"
+                                                                Style="{StaticResource PhotoButtonStyle}"
+                                                                Click="BtnPilihFotoKondisiAwal_Click"
+                                                                HorizontalAlignment="Stretch">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <materialIcons:MaterialIcon Kind="Camera" Width="18" Height="18" Margin="0,0,5,0" />
+                                                                <TextBlock Text="Pilih Foto Kondisi Awal" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
+
+                                                <TextBlock Text="Keterangan Kondisi Awal" Margin="0,10,0,10"/>
+                                                <TextBox x:Name="txtKeteranganKondisiAwal"
+                                                         Height="100"
+                                                         TextWrapping="Wrap"
+                                                         AcceptsReturn="True"
+                                                         VerticalScrollBarVisibility="Auto"/>
+
+                                                <!-- Kondisi Akhir -->
+                                                <TextBlock Text="Kondisi Akhir" Margin="0,20,0,10"/>
+                                                <Border Style="{StaticResource ImagePreviewBorder}"
+                                                        Height="200"
+                                                        Background="#F5F5F5">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- Preview Area -->
+                                                        <Border Grid.Row="0" 
+                                                                Background="White" 
+                                                                BorderBrush="#E0E0E0"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4"
+                                                                Margin="0,0,0,10">
+                                                            <Grid>
+                                                                <Image x:Name="imgKondisiAkhir" 
+                                                                       Stretch="Uniform"
+                                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                                       Margin="8"/>
+                                                                
+                                                                <!-- Placeholder when no image -->
+                                                                <StackPanel x:Name="noImagePlaceholderKondisiAkhir"
+                                                                            HorizontalAlignment="Center"
+                                                                            VerticalAlignment="Center">
+                                                                    <TextBlock Text="📷"
+                                                                               FontSize="32"
+                                                                               Foreground="#BDBDBD"
+                                                                               HorizontalAlignment="Center"/>
+                                                                    <TextBlock Text="Belum ada foto kondisi akhir"
+                                                                               Foreground="#757575"
+                                                                               Margin="0,5,0,0"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+
+                                                        <!-- Button Area -->
+                                                        <Button x:Name="btnPilihFotoKondisiAkhir"
+                                                                Grid.Row="1"
+                                                                Style="{StaticResource PhotoButtonStyle}"
+                                                                Click="BtnPilihFotoKondisiAkhir_Click"
+                                                                HorizontalAlignment="Stretch">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <materialIcons:MaterialIcon Kind="Camera" Width="18" Height="18" Margin="0,0,5,0" />
+                                                                <TextBlock Text="Pilih Foto Kondisi Akhir" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
+
+                                                <TextBlock Text="Keterangan Kondisi Akhir" Margin="0,10,0,10"/>
+                                                <TextBox x:Name="txtKeteranganKondisiAkhir"
+                                                         Height="100"
+                                                         TextWrapping="Wrap"
+                                                         AcceptsReturn="True"
+                                                         VerticalScrollBarVisibility="Auto"/>
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <!-- Button Panel -->
+                                <StackPanel Grid.Row="2" 
+                                            Orientation="Horizontal" 
+                                            HorizontalAlignment="Right" 
+                                            Margin="0,15,0,0">
+                                    <Button x:Name="btnBaru" 
+                                            Style="{StaticResource ButtonBaruStyle}"
+                                            Click="BtnBaru_Click"
+                                            ToolTip="Buat data baru">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialIcons:MaterialIcon Kind="FileOutline" Width="18" Height="18" Margin="0,0,5,0" />
+                                            <TextBlock Text="Baru" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="btnSimpan" 
+                                            Style="{StaticResource ButtonSimpanStyle}"
+                                            Click="BtnSimpan_Click"
+                                            ToolTip="Simpan data">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="18" Height="18" Margin="0,0,5,0" />
+                                            <TextBlock Text="Simpan" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="btnHapus" 
+                                            Style="{StaticResource ButtonHapusStyle}"
+                                            Click="BtnHapus_Click"
+                                            IsEnabled="False"
+                                            ToolTip="Hapus data yang dipilih">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialIcons:MaterialIcon Kind="DeleteOutline" Width="18" Height="18" Margin="0,0,5,0" />
+                                            <TextBlock Text="Hapus" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Grid>
+</Window>
