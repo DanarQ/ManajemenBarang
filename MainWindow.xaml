@@ -197,6 +197,12 @@
              <Setter Property="Height" Value="35"/>
              <Setter Property="Margin" Value="0"/> <!-- Hapus margin kanan untuk tombol terakhir -->
         </Style>
+        <Style x:Key="ButtonPrintStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#5E35B1"/>
+            <Setter Property="Width" Value="110"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="15,0,0,0"/>
+        </Style>
         
         <!-- Style untuk Cell DataGrid -->
         <Style TargetType="DataGridCell">
@@ -332,26 +338,7 @@
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"/>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="btnBackup" 
-                            Style="{StaticResource HeaderButtonStyle}"
-                            Click="BtnBackup_Click" Margin="0,0,10,0"
-                            ToolTip="Buat salinan cadangan data saat ini">
-                        <StackPanel Orientation="Horizontal">
-                            <materialIcons:MaterialIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,5,0" />
-                            <TextBlock Text="Backup" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="btnLoad"
-                            Style="{StaticResource HeaderButtonStyle}"
-                            Click="BtnLoad_Click"
-                            ToolTip="Muat data dari file backup">
-                        <StackPanel Orientation="Horizontal">
-                            <materialIcons:MaterialIcon Kind="FolderOpen" Width="18" Height="18" Margin="0,0,5,0" />
-                            <TextBlock Text="Load" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+                <!-- Tombol Header dihapus -->
             </Grid>
         </Border>
 
@@ -465,26 +452,34 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             
-                            <TextBox x:Name="txtCari" 
-                                    Grid.Column="0"
-                                    Height="30"
-                                    FontSize="13"
-                                    Padding="10,0"
-                                    VerticalContentAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    TextChanged="TxtCari_TextChanged"
-                                    Tag="Cari berdasarkan ID, nama, atau merek..."
-                                    Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBox x:Name="txtCari" Width="250" Height="35" Margin="0,0,10,0" 
+                                        Padding="10,0" VerticalContentAlignment="Center" 
+                                        Tag="Cari barang..." TextChanged="TxtCari_TextChanged"/>
+                                <Button x:Name="btnCari" Content="Cari" Style="{StaticResource ButtonCariStyle}"
+                                        Click="BtnCari_Click"/>
+                                <!-- Tombol Print Baru -->
+                                <Button x:Name="btnPrintBarang" Content="Print Daftar" Style="{StaticResource ButtonPrintStyle}"
+                                        Click="BtnPrintBarang_Click">
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialIcons:MaterialIcon Kind="Printer" Width="18" Height="18" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Print Daftar"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+                            </StackPanel>
                             
-                            <Button x:Name="btnCari" 
-                                    Grid.Column="1"
-                                    Style="{StaticResource ButtonCariStyle}"
-                                    Click="BtnCari_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialIcons:MaterialIcon Kind="Magnify" Width="18" Height="18" Margin="0,0,5,0" />
-                                    <TextBlock Text="Cari" />
-                                </StackPanel>
-                            </Button>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button x:Name="btnBackupData" Content="Backup Data" Width="120" Height="35" 
+                                        Background="#00897B" Foreground="White" Click="BtnBackup_Click"
+                                        Style="{StaticResource ModernButton}" Margin="0,0,10,0"/>
+                                <Button x:Name="btnLoadData" Content="Load Backup" Width="120" Height="35" 
+                                        Background="#00897B" Foreground="White" Click="BtnLoad_Click"
+                                        Style="{StaticResource ModernButton}"/>
+                            </StackPanel>
                         </Grid>
                         
                         <!-- DataGrid -->

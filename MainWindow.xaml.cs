@@ -24,6 +24,10 @@ using Win32 = Microsoft.Win32;
 using MsgBox = System.Windows.MessageBox;
 using ManajemenBarang.Views;
 using System.Diagnostics;
+using System.Printing;
+using System.Windows.Xps;
+using System.Windows.Xps.Packaging;
+using System.IO.Packaging;
 
 namespace ManajemenBarang;
 
@@ -1213,5 +1217,239 @@ public partial class MainWindow : Window
         {
             UpdateActiveButton(tabControl.SelectedIndex);
         }
+    }
+
+    private void BtnPrintBarang_Click(object sender, RoutedEventArgs e)
+    {
+        PrintBarangList();
+    }
+
+    private void PrintBarangList()
+    {
+        try
+        {
+            // Membuat dokumen yang akan dicetak
+            FlowDocument flowDocument = CreatePrintDocument();
+            
+            // Membuat PrintDialog
+            System.Windows.Controls.PrintDialog printDialog = new System.Windows.Controls.PrintDialog();
+            
+            // Tampilkan dialog print
+            if (printDialog.ShowDialog() == true)
+            {
+                // Mencetak dokumen
+                IDocumentPaginatorSource paginatorSource = flowDocument;
+                printDialog.PrintDocument(paginatorSource.DocumentPaginator, "Daftar Barang");
+                MsgBox.Show("Dokumen berhasil dicetak!", "Informasi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MsgBox.Show($"Terjadi kesalahan saat mencetak dokumen: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private FlowDocument CreatePrintDocument()
+    {
+        // Membuat dokumen
+        FlowDocument document = new FlowDocument();
+        document.PagePadding = new Thickness(50);
+        document.ColumnWidth = 1000; // Lebar dokumen
+        document.FontFamily = new System.Windows.Media.FontFamily("Segoe UI");
+        document.Background = System.Windows.Media.Brushes.White;
+        document.PageWidth = 794; // Ukuran A4 dalam piksel (210mm)
+        document.PageHeight = 1123; // Ukuran A4 dalam piksel (297mm)
+        
+        // Menambahkan logo/header atas
+        BlockUIContainer logoContainer = new BlockUIContainer();
+        Grid headerGrid = new Grid();
+        headerGrid.Margin = new Thickness(0, 0, 0, 20);
+        
+        // Tambahkan logo disporapar dari resources jika tersedia
+        System.Windows.Controls.Image logoImage = new System.Windows.Controls.Image();
+        logoImage.Height = 60;
+        logoImage.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+        
+        // Header teks
+        TextBlock headerText = new TextBlock();
+        headerText.Text = "DINAS PEMUDA, OLAHRAGA DAN PARIWISATA\nKABUPATEN TULUNGAGUNG";
+        headerText.FontSize = 16;
+        headerText.FontWeight = FontWeights.Bold;
+        headerText.TextAlignment = TextAlignment.Center;
+        headerText.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+        headerText.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+        
+        // Alamat
+        TextBlock addressText = new TextBlock();
+        addressText.Text = "Jl. Ki Mangunsarkoro No. 1 Tulungagung";
+        addressText.FontSize = 12;
+        addressText.TextAlignment = TextAlignment.Center;
+        addressText.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+        addressText.VerticalAlignment = System.Windows.VerticalAlignment.Bottom;
+        addressText.Margin = new Thickness(0, 5, 0, 0);
+        
+        // Tambahkan elemen ke grid
+        StackPanel headerPanel = new StackPanel();
+        headerPanel.Children.Add(headerText);
+        headerPanel.Children.Add(addressText);
+        
+        headerGrid.Children.Add(logoImage);
+        headerGrid.Children.Add(headerPanel);
+        
+        logoContainer.Child = headerGrid;
+        document.Blocks.Add(logoContainer);
+        
+        // Garis pemisah
+        Paragraph separator = new Paragraph(new Run(""));
+        separator.BorderBrush = System.Windows.Media.Brushes.Black;
+        separator.BorderThickness = new Thickness(0, 0, 0, 1);
+        separator.Padding = new Thickness(0, 0, 0, 5);
+        separator.Margin = new Thickness(0, 0, 0, 20);
+        document.Blocks.Add(separator);
+
+        // Menambahkan judul
+        Paragraph title = new Paragraph(new Run("DAFTAR INVENTARIS BARANG"));
+        title.FontSize = 18;
+        title.FontWeight = FontWeights.Bold;
+        title.TextAlignment = TextAlignment.Center;
+        title.Margin = new Thickness(0, 0, 0, 20);
+        document.Blocks.Add(title);
+
+        // Menambahkan tanggal cetak
+        Paragraph date = new Paragraph(new Run($"Tanggal Cetak: {DateTime.Now.ToString("dd MMMM yyyy HH:mm")}"));
+        date.FontSize = 11;
+        date.Margin = new Thickness(0, 0, 0, 20);
+        document.Blocks.Add(date);
+
+        // Membuat tabel
+        Table table = new Table();
+        table.CellSpacing = 0;
+        table.BorderBrush = System.Windows.Media.Brushes.Black;
+        table.BorderThickness = new Thickness(1);
+        
+        // Definisi kolom tabel
+        for (int i = 0; i < 8; i++)
+        {
+            TableColumn column = new TableColumn();
+            
+            // Sesuaikan lebar kolom
+            switch (i)
+            {
+                case 0: // ID Barang
+                    column.Width = new GridLength(70);
+                    break;
+                case 1: // Nama Barang
+                case 2: // Merek
+                    column.Width = new GridLength(120);
+                    break;
+                case 3: // Harga
+                    column.Width = new GridLength(100);
+                    break;
+                case 4: // Tanggal Perolehan
+                case 5: // Tanggal Pinjam
+                    column.Width = new GridLength(100);
+                    break;
+                case 6: // Pengguna
+                    column.Width = new GridLength(120);
+                    break;
+                case 7: // Bidang
+                    column.Width = new GridLength(100);
+                    break;
+            }
+            
+            table.Columns.Add(column);
+        }
+        
+        // Menambahkan grup baris
+        TableRowGroup rowGroup = new TableRowGroup();
+        table.RowGroups.Add(rowGroup);
+
+        // Menambahkan header tabel
+        TableRow headerRow = new TableRow();
+        headerRow.Background = System.Windows.Media.Brushes.LightGray;
+        headerRow.FontWeight = FontWeights.Bold;
+        
+        string[] headers = new string[] { "No ID", "Nama Barang", "Merek", "Harga", "Tanggal Perolehan", "Tanggal Pinjam", "Pengguna", "Bidang" };
+        
+        foreach (string header in headers)
+        {
+            headerRow.Cells.Add(CreateTableCell(header, TextAlignment.Center));
+        }
+        
+        rowGroup.Rows.Add(headerRow);
+
+        // Menambahkan data ke tabel
+        int rowIndex = 0;
+        foreach (Item item in _daftarBarang)
+        {
+            TableRow dataRow = new TableRow();
+            
+            // Buat baris selang-seling
+            if (rowIndex % 2 == 1)
+            {
+                dataRow.Background = System.Windows.Media.Brushes.WhiteSmoke;
+            }
+            
+            dataRow.Cells.Add(CreateTableCell(item.IdBarang, TextAlignment.Center));
+            dataRow.Cells.Add(CreateTableCell(item.NamaBarang));
+            dataRow.Cells.Add(CreateTableCell(item.MerekBarang));
+            dataRow.Cells.Add(CreateTableCell(FormatRupiah(item.HargaBarang), TextAlignment.Right));
+            dataRow.Cells.Add(CreateTableCell(item.TanggalPerolehan.ToString("dd/MM/yyyy"), TextAlignment.Center));
+            dataRow.Cells.Add(CreateTableCell(item.TanggalPinjam.ToString("dd/MM/yyyy"), TextAlignment.Center));
+            dataRow.Cells.Add(CreateTableCell(item.NamaPengguna));
+            dataRow.Cells.Add(CreateTableCell(item.Bidang ?? "-"));
+            
+            rowGroup.Rows.Add(dataRow);
+            rowIndex++;
+        }
+
+        document.Blocks.Add(table);
+        
+        // Menambahkan footer
+        Paragraph footer = new Paragraph(new Run($"Total Jumlah Barang: {_daftarBarang.Count} item"));
+        footer.FontSize = 12;
+        footer.FontWeight = FontWeights.Bold;
+        footer.Margin = new Thickness(0, 20, 0, 0);
+        document.Blocks.Add(footer);
+        
+        // Tanda tangan
+        Paragraph signature = new Paragraph();
+        signature.Margin = new Thickness(0, 40, 0, 0);
+        signature.TextAlignment = TextAlignment.Right;
+        
+        Run signatureText = new Run($"Tulungagung, {DateTime.Now.ToString("dd MMMM yyyy")}\n");
+        signatureText.FontSize = 11;
+        
+        Run signatureRole = new Run("Kepala Dinas\n\n\n\n");
+        signatureRole.FontSize = 11;
+        
+        Run signatureName = new Run("____________________");
+        signatureName.FontSize = 11;
+        signatureName.FontWeight = FontWeights.Bold;
+        
+        signature.Inlines.Add(signatureText);
+        signature.Inlines.Add(signatureRole);
+        signature.Inlines.Add(signatureName);
+        
+        document.Blocks.Add(signature);
+        
+        return document;
+    }
+
+    private TableCell CreateTableCell(string text, TextAlignment alignment = TextAlignment.Left)
+    {
+        TableCell cell = new TableCell();
+        Paragraph p = new Paragraph(new Run(text));
+        p.TextAlignment = alignment;
+        p.Margin = new Thickness(5);
+        cell.Blocks.Add(p);
+        cell.BorderBrush = System.Windows.Media.Brushes.Black;
+        cell.BorderThickness = new Thickness(1);
+        return cell;
+    }
+
+    private string FormatRupiah(decimal value)
+    {
+        return string.Format(CultureInfo.CreateSpecificCulture("id-ID"), "Rp {0:N0}", value);
     }
 }
