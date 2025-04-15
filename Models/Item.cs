@@ -12,6 +12,7 @@ namespace ManajemenBarang.Models
         public DateTime TanggalPinjam { get; set; }
         public required string NamaPengguna { get; set; }
         public string? KeteranganBarang { get; set; }
+        public string? Bidang { get; set; }
         
         // Properti baru untuk foto dan dokumentasi
         public string? FotoPath { get; set; }
@@ -37,6 +38,7 @@ namespace ManajemenBarang.Models
             TanggalPinjam = tanggalPinjam;
             NamaPengguna = namaPengguna;
             KeteranganBarang = keteranganBarang;
+            Bidang = null;
         }
     }
 } 

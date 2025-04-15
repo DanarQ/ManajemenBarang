@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using WinForms = System.Windows.Forms;
 using Win32 = Microsoft.Win32;
 using MsgBox = System.Windows.MessageBox;
+using ManajemenBarang.Views;
 
 namespace ManajemenBarang;
 
@@ -107,6 +108,7 @@ public partial class MainWindow : Window
         dpTanggalPerolehan.SelectedDate = DateTime.Now;
         dpTanggalPinjam.SelectedDate = DateTime.Now;
         txtNamaPengguna.Text = string.Empty;
+        txtBidang.Text = string.Empty;
         txtKeteranganBarang.Text = string.Empty;
         txtKeteranganKondisiAwal.Text = string.Empty;
         txtKeteranganKondisiAkhir.Text = string.Empty;
@@ -241,19 +243,33 @@ public partial class MainWindow : Window
             TanggalPerolehan = dpTanggalPerolehan.SelectedDate ?? DateTime.Now,
             TanggalPinjam = dpTanggalPinjam.SelectedDate ?? DateTime.Now,
             NamaPengguna = txtNamaPengguna.Text,
+            Bidang = txtBidang.Text,
             KeteranganBarang = txtKeteranganBarang.Text,
             KeteranganKondisiAwal = txtKeteranganKondisiAwal.Text,
             KeteranganKondisiAkhir = txtKeteranganKondisiAkhir.Text
         };
 
-        // If editing, get the existing item to preserve photo paths if no new photos are selected
-        Item existingItem = null;
+        // If editing, preserve photo paths 
         if (_isEditMode)
         {
-            existingItem = _daftarBarang.FirstOrDefault(i => i.IdBarang == item.IdBarang);
+            // If no new photo is selected, keep the current path
+            if (string.IsNullOrEmpty(_selectedImagePath))
+            {
+                item.FotoPath = _currentFotoPath;
+            }
+            // If no new kondisi awal photo is selected, keep the current path
+            if (string.IsNullOrEmpty(_selectedKondisiAwalPath))
+            {
+                item.KondisiAwalPath = _currentKondisiAwalPath;
+            }
+            // If no new kondisi akhir photo is selected, keep the current path
+            if (string.IsNullOrEmpty(_selectedKondisiAkhirPath))
+            {
+                item.KondisiAkhirPath = _currentKondisiAkhirPath;
+            }
         }
 
-        // Handle main photo
+        // Handle main photo - only if a new photo is selected
         if (!string.IsNullOrEmpty(_selectedImagePath))
         {
             string fileName = $"{item.IdBarang}_{DateTime.Now:yyyyMMddHHmmss}.jpg";
@@ -261,12 +277,8 @@ public partial class MainWindow : Window
             File.Copy(_selectedImagePath, destinationPath, true);
             item.FotoPath = fileName;
         }
-        else if (_isEditMode && existingItem != null)
-        {
-            item.FotoPath = existingItem.FotoPath;
-        }
 
-        // Handle kondisi awal photo
+        // Handle kondisi awal photo - only if a new photo is selected
         if (!string.IsNullOrEmpty(_selectedKondisiAwalPath))
         {
             string fileName = $"{item.IdBarang}_kondisi_awal_{DateTime.Now:yyyyMMddHHmmss}.jpg";
@@ -274,22 +286,14 @@ public partial class MainWindow : Window
             File.Copy(_selectedKondisiAwalPath, destinationPath, true);
             item.KondisiAwalPath = fileName;
         }
-        else if (_isEditMode && existingItem != null)
-        {
-            item.KondisiAwalPath = existingItem.KondisiAwalPath;
-        }
 
-        // Handle kondisi akhir photo
+        // Handle kondisi akhir photo - only if a new photo is selected
         if (!string.IsNullOrEmpty(_selectedKondisiAkhirPath))
         {
             string fileName = $"{item.IdBarang}_kondisi_akhir_{DateTime.Now:yyyyMMddHHmmss}.jpg";
             string destinationPath = Path.Combine(_storageService.AssetGambarPath, fileName);
             File.Copy(_selectedKondisiAkhirPath, destinationPath, true);
             item.KondisiAkhirPath = fileName;
-        }
-        else if (_isEditMode && existingItem != null)
-        {
-            item.KondisiAkhirPath = existingItem.KondisiAkhirPath;
         }
 
         return item;
@@ -302,12 +306,15 @@ public partial class MainWindow : Window
         // Reset selected image paths when switching to a different item
         if (_currentEditingId != item.IdBarang)
         {
+            // Reset selected paths
             _selectedImagePath = null;
             _selectedKondisiAwalPath = null;
             _selectedKondisiAkhirPath = null;
+            
+            // Store the current item ID
             _currentEditingId = item.IdBarang;
             
-            // Reset current paths
+            // Store the current photo paths from the item
             _currentFotoPath = item.FotoPath;
             _currentKondisiAwalPath = item.KondisiAwalPath;
             _currentKondisiAkhirPath = item.KondisiAkhirPath;
@@ -320,6 +327,7 @@ public partial class MainWindow : Window
         dpTanggalPerolehan.SelectedDate = item.TanggalPerolehan;
         dpTanggalPinjam.SelectedDate = item.TanggalPinjam;
         txtNamaPengguna.Text = item.NamaPengguna;
+        txtBidang.Text = item.Bidang;
         txtKeteranganBarang.Text = item.KeteranganBarang;
         txtKeteranganKondisiAwal.Text = item.KeteranganKondisiAwal;
         txtKeteranganKondisiAkhir.Text = item.KeteranganKondisiAkhir;
@@ -436,6 +444,7 @@ public partial class MainWindow : Window
                dpTanggalPerolehan.SelectedDate != _selectedItem.TanggalPerolehan ||
                dpTanggalPinjam.SelectedDate != _selectedItem.TanggalPinjam ||
                txtNamaPengguna.Text != _selectedItem.NamaPengguna ||
+               txtBidang.Text != _selectedItem.Bidang ||
                txtKeteranganBarang.Text != _selectedItem.KeteranganBarang ||
                txtKeteranganKondisiAwal.Text != _selectedItem.KeteranganKondisiAwal ||
                txtKeteranganKondisiAkhir.Text != _selectedItem.KeteranganKondisiAkhir ||
@@ -778,7 +787,7 @@ public partial class MainWindow : Window
 
     private async void BtnPilihFoto_Click(object sender, RoutedEventArgs e)
     {
-        var file = await PilihFoto();
+        var file = await PilihFoto(sender);
         if (file != null)
         {
             imgBarang.Source = new BitmapImage(new Uri(file.FullName));
@@ -788,7 +797,7 @@ public partial class MainWindow : Window
 
     private async void BtnPilihFotoKondisiAwal_Click(object sender, RoutedEventArgs e)
     {
-        var file = await PilihFoto();
+        var file = await PilihFoto(sender);
         if (file != null)
         {
             imgKondisiAwal.Source = new BitmapImage(new Uri(file.FullName));
@@ -798,7 +807,7 @@ public partial class MainWindow : Window
 
     private async void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
     {
-        var file = await PilihFoto();
+        var file = await PilihFoto(sender);
         if (file != null)
         {
             imgKondisiAkhir.Source = new BitmapImage(new Uri(file.FullName));
@@ -806,7 +815,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task<FileInfo?> PilihFoto()
+    private async Task<FileInfo?> PilihFoto(object sender)
     {
         var openFileDialog = new Microsoft.Win32.OpenFileDialog
         {
@@ -822,16 +831,16 @@ public partial class MainWindow : Window
                 var file = new FileInfo(openFileDialog.FileName);
                 if (file.Exists)
                 {
-                    // Store the selected path based on which button was clicked
-                    if (ReferenceEquals(FocusManager.GetFocusedElement(this), btnPilihFoto))
+                    // Use sender parameter instead of FocusManager to determine which button was clicked
+                    if (sender == btnPilihFoto)
                     {
                         _selectedImagePath = file.FullName;
                     }
-                    else if (ReferenceEquals(FocusManager.GetFocusedElement(this), btnPilihFotoKondisiAwal))
+                    else if (sender == btnPilihFotoKondisiAwal)
                     {
                         _selectedKondisiAwalPath = file.FullName;
                     }
-                    else if (ReferenceEquals(FocusManager.GetFocusedElement(this), btnPilihFotoKondisiAkhir))
+                    else if (sender == btnPilihFotoKondisiAkhir)
                     {
                         _selectedKondisiAkhirPath = file.FullName;
                     }
@@ -844,5 +853,85 @@ public partial class MainWindow : Window
             }
         }
         return null;
+    }
+
+    // Tambahkan method untuk sidebar
+    private void BtnListBarang_Click(object sender, RoutedEventArgs e)
+    {
+        // Tampilkan tab daftar barang
+        tabControl.SelectedIndex = 0;
+    }
+
+    private void BtnTambahBarang_Click(object sender, RoutedEventArgs e)
+    {
+        // Reset form dan tampilkan tab tambah barang
+        ClearInputs();
+        tabControl.SelectedIndex = 1;
+    }
+
+    private void BtnEditBarang_Click(object sender, RoutedEventArgs e)
+    {
+        // Cek apakah ada item yang dipilih
+        if (dgBarang.SelectedItem is Item selectedItem)
+        {
+            // Set form berdasarkan item yang dipilih
+            SetInputsFromItem(selectedItem);
+            tabControl.SelectedIndex = 1;
+        }
+        else
+        {
+            MsgBox.Show("Pilih item dari daftar terlebih dahulu untuk diedit.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            tabControl.SelectedIndex = 0;
+        }
+    }
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        // Set tab default ke daftar barang
+        tabControl.SelectedIndex = 0;
+    }
+
+    private async void BtnHapusItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button button && button.Tag is string itemId)
+        {
+            var targetItem = _daftarBarang.FirstOrDefault(item => item.IdBarang == itemId);
+            
+            if (targetItem != null)
+            {
+                var result = MsgBox.Show($"Anda yakin ingin menghapus barang dengan ID {itemId}?", 
+                                         "Konfirmasi", 
+                                         MessageBoxButton.YesNo, 
+                                         MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        bool success = await _storageService.DeleteItemAsync(itemId);
+                        if (success)
+                        {
+                            MsgBox.Show("Data barang berhasil dihapus!", "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
+                            
+                            // If the current editing item is the one being deleted, clear the inputs
+                            if (_currentEditingId == itemId)
+                            {
+                                ClearInputs();
+                            }
+                            
+                            await LoadData();
+                        }
+                        else
+                        {
+                            MsgBox.Show("Gagal menghapus data barang!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
     }
 }
