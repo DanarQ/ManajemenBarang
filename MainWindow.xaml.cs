@@ -64,6 +64,9 @@ public partial class MainWindow : Window
         
         dpTanggalPerolehan.SelectedDate = DateTime.Now;
         dpTanggalPinjam.SelectedDate = DateTime.Now;
+        
+        // Connect TabControl selection changed event
+        tabControl.SelectionChanged += TabControl_SelectionChanged;
     }
 
     private async Task LoadData()
@@ -1048,18 +1051,63 @@ public partial class MainWindow : Window
         return null;
     }
 
+    private void UpdateActiveButton(int tabIndex)
+    {
+        // Reset all buttons to default style
+        ResetSidebarButtons();
+        
+        // Mark the active button
+        switch (tabIndex)
+        {
+            case 0: // Daftar Barang
+                MarkButtonActive(btnListBarang);
+                break;
+            case 1: // Form (Tambah/Edit Barang)
+                if (_isEditMode)
+                    MarkButtonActive(btnEditBarang);
+                else
+                    MarkButtonActive(btnTambahBarang);
+                break;
+        }
+    }
+    
+    private void ResetSidebarButtons()
+    {
+        // Reset all sidebar buttons to default state
+        btnListBarang.Background = System.Windows.Media.Brushes.Transparent;
+        btnTambahBarang.Background = System.Windows.Media.Brushes.Transparent;
+        btnEditBarang.Background = System.Windows.Media.Brushes.Transparent;
+    }
+    
+    private void MarkButtonActive(System.Windows.Controls.Button button)
+    {
+        button.Background = new System.Windows.Media.SolidColorBrush(
+            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1565C0"));
+    }
+
     // Tambahkan method untuk sidebar
     private void BtnListBarang_Click(object sender, RoutedEventArgs e)
     {
         // Tampilkan tab daftar barang
         tabControl.SelectedIndex = 0;
+        UpdateActiveButton(0);
     }
 
     private void BtnTambahBarang_Click(object sender, RoutedEventArgs e)
     {
         // Reset form dan tampilkan tab tambah barang
         ClearInputs();
+        
+        // Set ID otomatis ke nomor terbaru
+        int nextId = GetNextId();
+        txtIdBarang.Text = nextId.ToString();
+        
+        // Enable ID field untuk pengguna jika ingin mengubahnya
+        txtIdBarang.IsEnabled = true;
+        
+        // Buka tab form
         tabControl.SelectedIndex = 1;
+        UpdateActiveButton(1);
     }
 
     private void BtnEditBarang_Click(object sender, RoutedEventArgs e)
@@ -1070,11 +1118,13 @@ public partial class MainWindow : Window
             // Set form berdasarkan item yang dipilih
             SetInputsFromItem(selectedItem);
             tabControl.SelectedIndex = 1;
+            UpdateActiveButton(1);
         }
         else
         {
             MsgBox.Show("Pilih item dari daftar terlebih dahulu untuk diedit.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             tabControl.SelectedIndex = 0;
+            UpdateActiveButton(0);
         }
     }
 
@@ -1082,6 +1132,7 @@ public partial class MainWindow : Window
     {
         // Set tab default ke daftar barang
         tabControl.SelectedIndex = 0;
+        UpdateActiveButton(0);
     }
 
     private async void BtnHapusItem_Click(object sender, RoutedEventArgs e)
@@ -1154,5 +1205,13 @@ public partial class MainWindow : Window
     private async void BtnPilihFotoKondisiAkhir_Click(object sender, RoutedEventArgs e)
     {
         await PilihFoto(sender);
+    }
+
+    private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (tabControl.SelectedIndex >= 0)
+        {
+            UpdateActiveButton(tabControl.SelectedIndex);
+        }
     }
 }

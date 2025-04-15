@@ -256,7 +256,7 @@
         <Style x:Key="SidebarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,12"/>
+            <Setter Property="Padding" Value="15,14"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -265,21 +265,36 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter x:Name="contentPresenter"
-                                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                            VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid>
+                            <Border x:Name="LeftIndicator" 
+                                    Width="4" 
+                                    HorizontalAlignment="Left" 
+                                    Background="#42A5F5" 
+                                    Visibility="Collapsed"
+                                    CornerRadius="0,2,2,0"/>
+                            <Border x:Name="MainBorder" 
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Margin="0,2">
+                                <ContentPresenter x:Name="contentPresenter"
+                                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                VerticalAlignment="Center" 
+                                                Margin="0,0,0,0"/>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="Background" Value="#1565C0" TargetName="MainBorder"/>
+                                <Setter Property="Visibility" Value="Visible" TargetName="LeftIndicator"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#0D47A1"/>
+                                <Setter Property="Background" Value="#0D47A1" TargetName="MainBorder"/>
                             </Trigger>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TabItem}}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" TargetName="LeftIndicator"/>
+                                <Setter Property="Background" Value="#1565C0" TargetName="MainBorder"/>
+                            </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -288,10 +303,10 @@
         
         <!-- Style untuk sidebar header -->
         <Style x:Key="SidebarHeaderStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="#90CAF9"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="15,20,15,10"/>
+            <Setter Property="Margin" Value="15,25,15,8"/>
         </Style>
     </Window.Resources>
 
@@ -349,52 +364,83 @@
             
             <!-- Sidebar -->
             <Border Grid.Column="0" Background="#0D47A1">
-                <StackPanel>
-                    <TextBlock Text="MENU" Style="{StaticResource SidebarHeaderStyle}"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                     
-                    <Button x:Name="btnListBarang" 
-                            Style="{StaticResource SidebarButtonStyle}"
-                            Click="BtnListBarang_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <materialIcons:MaterialIcon Kind="ViewList" Width="22" Height="22" Margin="0,0,10,0" />
-                            <TextBlock Text="Daftar Barang" />
+                    <!-- Logo Area -->
+                    <Border Grid.Row="0" Background="#0A3D8F" Padding="15,20">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <materialIcons:MaterialIcon Kind="FolderAccount" Width="24" Height="24" Foreground="White" Margin="0,0,10,0"/>
+                            <TextBlock Text="MANAJEMEN BARANG" 
+                                      Foreground="White" 
+                                      FontWeight="Bold" 
+                                      FontSize="16"
+                                      VerticalAlignment="Center"/>
                         </StackPanel>
-                    </Button>
+                    </Border>
                     
-                    <Button x:Name="btnTambahBarang" 
-                            Style="{StaticResource SidebarButtonStyle}"
-                            Click="BtnTambahBarang_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <materialIcons:MaterialIcon Kind="Plus" Width="22" Height="22" Margin="0,0,10,0" />
-                            <TextBlock Text="Tambah Barang" />
+                    <!-- Menu Items -->
+                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                        <TextBlock Text="MENU" Style="{StaticResource SidebarHeaderStyle}"/>
+                        
+                        <Button x:Name="btnListBarang" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Click="BtnListBarang_Click"
+                                Tag="0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="ViewList" Width="22" Height="22" Margin="0,0,12,0" />
+                                <TextBlock Text="Daftar Barang" />
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button x:Name="btnTambahBarang" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Click="BtnTambahBarang_Click"
+                                Tag="1">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="Plus" Width="22" Height="22" Margin="0,0,12,0" />
+                                <TextBlock Text="Tambah Barang" />
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button x:Name="btnEditBarang" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Click="BtnEditBarang_Click"
+                                Tag="1">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="Edit" Width="22" Height="22" Margin="0,0,12,0" />
+                                <TextBlock Text="Edit Barang" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    
+                    <!-- Footer Info -->
+                    <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#1565C0">
+                        <StackPanel Margin="0,15,0,20">
+                            <TextBlock Text="INFORMASI" Style="{StaticResource SidebarHeaderStyle}"/>
+                            
+                            <Border Margin="15,8,15,8" Background="#093679" CornerRadius="4" Padding="10">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <materialIcons:MaterialIcon Kind="Information" Width="16" Height="16" Foreground="#90CAF9"/>
+                                        <TextBlock Text="VERSI APLIKASI" FontSize="11" Foreground="#90CAF9" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Manajemen Barang v1.1" 
+                                              Foreground="White" 
+                                              FontSize="12" 
+                                              Margin="0,0,0,5"/>
+                                    <TextBlock Text="© 2025 Disporapar" 
+                                              Foreground="#B3E5FC" 
+                                              FontSize="11"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </Button>
-                    
-                    <Button x:Name="btnEditBarang" 
-                            Style="{StaticResource SidebarButtonStyle}"
-                            Click="BtnEditBarang_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <materialIcons:MaterialIcon Kind="Edit" Width="22" Height="22" Margin="0,0,10,0" />
-                            <TextBlock Text="Edit Barang" />
-                        </StackPanel>
-                    </Button>
-                    
-                    <Border Height="1" Background="#1565C0" Margin="15,10"/>
-                    
-                    <TextBlock Text="INFO" Style="{StaticResource SidebarHeaderStyle}"/>
-                    
-                    <TextBlock Margin="15,0,15,5" 
-                               TextWrapping="Wrap" 
-                               Foreground="#B3E5FC">
-                        Aplikasi Manajemen Barang v1.1
-                    </TextBlock>
-                    
-                    <TextBlock Margin="15,0,15,15" 
-                               TextWrapping="Wrap" 
-                               Foreground="#B3E5FC">
-                        © 2025 Disporapar
-                    </TextBlock>
-                </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
             
             <!-- Content Area - TabControl -->
