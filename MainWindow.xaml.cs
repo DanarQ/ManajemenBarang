@@ -23,6 +23,7 @@ using WinForms = System.Windows.Forms;
 using Win32 = Microsoft.Win32;
 using MsgBox = System.Windows.MessageBox;
 using ManajemenBarang.Views;
+using System.Diagnostics;
 
 namespace ManajemenBarang;
 
@@ -159,16 +160,36 @@ public partial class MainWindow : Window
             return false;
         }
 
-        if (!_isEditMode && _daftarBarang.Any(item => item.IdBarang == txtIdBarang.Text))
+        if (!int.TryParse(txtIdBarang.Text, out _))
         {
-            MsgBox.Show($"ID Barang '{txtIdBarang.Text}' sudah digunakan. Harap gunakan ID lain.", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MsgBox.Show("No ID Barang harus berupa angka!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtIdBarang.Focus();
             return false;
         }
         
-        if (!int.TryParse(txtIdBarang.Text, out _))
+        // Strong duplicate ID check - always check regardless of edit mode
+        string currentId = txtIdBarang.Text.Trim();
+        bool isDuplicate = false;
+        
+        if (_isEditMode)
         {
-            MsgBox.Show("No ID Barang harus berupa angka!", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            // In edit mode, check if the ID has changed and if it conflicts with another item
+            if (_currentEditingId != currentId)
+            {
+                isDuplicate = _daftarBarang.Any(item => item.IdBarang == currentId);
+                Debug.WriteLine($"Edit mode - ID changed from {_currentEditingId} to {currentId}, isDuplicate: {isDuplicate}");
+            }
+        }
+        else
+        {
+            // In add mode, always check for duplicates
+            isDuplicate = _daftarBarang.Any(item => item.IdBarang == currentId);
+            Debug.WriteLine($"Add mode - checking ID {currentId}, isDuplicate: {isDuplicate}");
+        }
+        
+        if (isDuplicate)
+        {
+            MsgBox.Show($"ID Barang '{currentId}' sudah digunakan. Harap gunakan ID lain.", "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
             txtIdBarang.Focus();
             return false;
         }
@@ -228,7 +249,10 @@ public partial class MainWindow : Window
     private Item GetItemFromInputs()
     {
         // Validasi input
-        ValidateInputs();
+        if (!ValidateInputs())
+        {
+            return null;
+        }
 
         // Ambil data dari input
         var idBarang = txtIdBarang.Text.Trim();
@@ -240,6 +264,8 @@ public partial class MainWindow : Window
         var namaPengguna = txtNamaPengguna.Text.Trim();
         var bidang = txtBidang.Text.Trim();
         var keteranganBarang = txtKeteranganBarang.Text.Trim();
+
+        Debug.WriteLine($"Creating item with ID: {idBarang}");
 
         // Buat objek barang baru
         var item = new Item
@@ -260,60 +286,77 @@ public partial class MainWindow : Window
         {
             // Use the original ID when saving images in edit mode
             string originalId = _currentEditingId ?? idBarang;
+            Debug.WriteLine($"Edit mode: Using original ID for images: {originalId}");
             
             // Untuk foto utama
             if (_selectedImagePath != null)
             {
+                Debug.WriteLine($"Saving new main photo from: {_selectedImagePath}");
                 // SaveImage returns the fileName, not a FileInfo
                 var fileName = _storageService.SaveImage(_selectedImagePath, originalId, "foto");
                 item.FotoPath = fileName;
+                Debug.WriteLine($"Saved main photo as: {fileName}");
             }
             else
             {
                 item.FotoPath = _selectedItem.FotoPath;
+                Debug.WriteLine($"Keeping existing main photo: {item.FotoPath}");
             }
 
             // Untuk foto kondisi awal
             if (_selectedKondisiAwalPath != null)
             {
+                Debug.WriteLine($"Saving new kondisi awal photo from: {_selectedKondisiAwalPath}");
                 var fileName = _storageService.SaveImage(_selectedKondisiAwalPath, originalId, "kondisi_awal");
                 item.KondisiAwalPath = fileName;
+                Debug.WriteLine($"Saved kondisi awal photo as: {fileName}");
             }
             else
             {
                 item.KondisiAwalPath = _selectedItem.KondisiAwalPath;
+                Debug.WriteLine($"Keeping existing kondisi awal photo: {item.KondisiAwalPath}");
             }
 
             // Untuk foto kondisi akhir
             if (_selectedKondisiAkhirPath != null)
             {
+                Debug.WriteLine($"Saving new kondisi akhir photo from: {_selectedKondisiAkhirPath}");
                 var fileName = _storageService.SaveImage(_selectedKondisiAkhirPath, originalId, "kondisi_akhir");
                 item.KondisiAkhirPath = fileName;
+                Debug.WriteLine($"Saved kondisi akhir photo as: {fileName}");
             }
             else
             {
                 item.KondisiAkhirPath = _selectedItem.KondisiAkhirPath;
+                Debug.WriteLine($"Keeping existing kondisi akhir photo: {item.KondisiAkhirPath}");
             }
         }
         else
         {
+            Debug.WriteLine("Add mode: Using current ID for images");
             // Mode tambah baru
             if (_selectedImagePath != null)
             {
+                Debug.WriteLine($"Saving new main photo from: {_selectedImagePath}");
                 var fileName = _storageService.SaveImage(_selectedImagePath, idBarang, "foto");
                 item.FotoPath = fileName;
+                Debug.WriteLine($"Saved main photo as: {fileName}");
             }
 
             if (_selectedKondisiAwalPath != null)
             {
+                Debug.WriteLine($"Saving new kondisi awal photo from: {_selectedKondisiAwalPath}");
                 var fileName = _storageService.SaveImage(_selectedKondisiAwalPath, idBarang, "kondisi_awal");
                 item.KondisiAwalPath = fileName;
+                Debug.WriteLine($"Saved kondisi awal photo as: {fileName}");
             }
 
             if (_selectedKondisiAkhirPath != null)
             {
+                Debug.WriteLine($"Saving new kondisi akhir photo from: {_selectedKondisiAkhirPath}");
                 var fileName = _storageService.SaveImage(_selectedKondisiAkhirPath, idBarang, "kondisi_akhir");
                 item.KondisiAkhirPath = fileName;
+                Debug.WriteLine($"Saved kondisi akhir photo as: {fileName}");
             }
         }
 
@@ -324,10 +367,14 @@ public partial class MainWindow : Window
     {
         if (item == null) return;
 
+        Debug.WriteLine($"Setting inputs from item: {item.IdBarang}");
+
         // Store current item data for reference
         _currentFotoPath = item.FotoPath;
         _currentKondisiAwalPath = item.KondisiAwalPath;
         _currentKondisiAkhirPath = item.KondisiAkhirPath;
+
+        Debug.WriteLine($"Item foto paths: Main={item.FotoPath}, KondisiAwal={item.KondisiAwalPath}, KondisiAkhir={item.KondisiAkhirPath}");
         
         // Don't reset anything based on _currentEditingId
         // Just populate the form with current item data
@@ -349,41 +396,130 @@ public partial class MainWindow : Window
         noImagePlaceholderKondisiAwal.Visibility = Visibility.Visible;
         noImagePlaceholderKondisiAkhir.Visibility = Visibility.Visible;
 
+        try
+        {
+            // Ensure the application captures image loading issues by using a more explicit method
+            LoadItemImages(item);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading photos: {ex.Message}");
+        }
+
+        txtIdBarang.IsEnabled = false;
+        _isEditMode = true;
+    }
+    
+    private void LoadItemImages(Item item)
+    {
+        Debug.WriteLine("LoadItemImages - Started loading images for item");
+        
         // Load main photo if it exists
         if (!string.IsNullOrEmpty(item.FotoPath))
         {
-            string fullPath = Path.Combine(_storageService.ImagePath, item.FotoPath);
-            if (File.Exists(fullPath))
+            Debug.WriteLine($"Loading main photo: {item.FotoPath}");
+            
+            // Try both the primary image location and the asset location
+            string imagePath = Path.Combine(_storageService.ImagePath, item.FotoPath);
+            string assetPath = Path.Combine(_storageService.AssetGambarPath, item.FotoPath);
+            
+            Debug.WriteLine($"Main photo paths to check: \n1. {imagePath} \n2. {assetPath}");
+            
+            if (File.Exists(imagePath))
             {
-                imgBarang.Source = new BitmapImage(new Uri(fullPath));
-                noImagePlaceholder.Visibility = Visibility.Collapsed;
+                Debug.WriteLine($"Main photo found in primary location: {imagePath}");
+                LoadImageIntoControl(imagePath, imgBarang, noImagePlaceholder);
+            }
+            else if (File.Exists(assetPath))
+            {
+                Debug.WriteLine($"Main photo found in asset location: {assetPath}");
+                LoadImageIntoControl(assetPath, imgBarang, noImagePlaceholder);
+            }
+            else
+            {
+                Debug.WriteLine($"Main photo file not found in either location: {item.FotoPath}");
             }
         }
 
         // Load kondisi awal photo if it exists
         if (!string.IsNullOrEmpty(item.KondisiAwalPath))
         {
-            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAwalPath);
-            if (File.Exists(fullPath))
+            Debug.WriteLine($"Loading kondisi awal photo: {item.KondisiAwalPath}");
+            
+            string imagePath = Path.Combine(_storageService.ImagePath, item.KondisiAwalPath);
+            string assetPath = Path.Combine(_storageService.AssetGambarPath, item.KondisiAwalPath);
+            
+            Debug.WriteLine($"Kondisi awal photo paths to check: \n1. {imagePath} \n2. {assetPath}");
+            
+            if (File.Exists(imagePath))
             {
-                imgKondisiAwal.Source = new BitmapImage(new Uri(fullPath));
-                noImagePlaceholderKondisiAwal.Visibility = Visibility.Collapsed;
+                Debug.WriteLine($"Kondisi awal photo found in primary location: {imagePath}");
+                LoadImageIntoControl(imagePath, imgKondisiAwal, noImagePlaceholderKondisiAwal);
+            }
+            else if (File.Exists(assetPath))
+            {
+                Debug.WriteLine($"Kondisi awal photo found in asset location: {assetPath}");
+                LoadImageIntoControl(assetPath, imgKondisiAwal, noImagePlaceholderKondisiAwal);
+            }
+            else
+            {
+                Debug.WriteLine($"Kondisi awal photo file not found in either location: {item.KondisiAwalPath}");
             }
         }
 
         // Load kondisi akhir photo if it exists
         if (!string.IsNullOrEmpty(item.KondisiAkhirPath))
         {
-            string fullPath = Path.Combine(_storageService.ImagePath, item.KondisiAkhirPath);
-            if (File.Exists(fullPath))
+            Debug.WriteLine($"Loading kondisi akhir photo: {item.KondisiAkhirPath}");
+            
+            string imagePath = Path.Combine(_storageService.ImagePath, item.KondisiAkhirPath);
+            string assetPath = Path.Combine(_storageService.AssetGambarPath, item.KondisiAkhirPath);
+            
+            Debug.WriteLine($"Kondisi akhir photo paths to check: \n1. {imagePath} \n2. {assetPath}");
+            
+            if (File.Exists(imagePath))
             {
-                imgKondisiAkhir.Source = new BitmapImage(new Uri(fullPath));
-                noImagePlaceholderKondisiAkhir.Visibility = Visibility.Collapsed;
+                Debug.WriteLine($"Kondisi akhir photo found in primary location: {imagePath}");
+                LoadImageIntoControl(imagePath, imgKondisiAkhir, noImagePlaceholderKondisiAkhir);
+            }
+            else if (File.Exists(assetPath))
+            {
+                Debug.WriteLine($"Kondisi akhir photo found in asset location: {assetPath}");
+                LoadImageIntoControl(assetPath, imgKondisiAkhir, noImagePlaceholderKondisiAkhir);
+            }
+            else
+            {
+                Debug.WriteLine($"Kondisi akhir photo file not found in either location: {item.KondisiAkhirPath}");
             }
         }
-
-        txtIdBarang.IsEnabled = false;
-        _isEditMode = true;
+    }
+    
+    private void LoadImageIntoControl(string imagePath, System.Windows.Controls.Image imageControl, UIElement placeholder)
+    {
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
+            bitmap.EndInit();
+            
+            imageControl.Source = bitmap;
+            if (placeholder != null)
+            {
+                placeholder.Visibility = Visibility.Collapsed;
+            }
+            Debug.WriteLine($"Successfully loaded image from {imagePath}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading image from {imagePath}: {ex.Message}");
+            if (placeholder != null)
+            {
+                placeholder.Visibility = Visibility.Visible;
+            }
+        }
     }
 
     private async void BtnSimpan_Click(object sender, RoutedEventArgs e)
@@ -857,41 +993,55 @@ public partial class MainWindow : Window
                 var file = new FileInfo(openFileDialog.FileName);
                 if (file.Exists)
                 {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.UriSource = new Uri(file.FullName);
+                    bitmap.EndInit();
+                    
                     // Clear previous selection first to avoid carrying over old selections
                     if (sender == btnPilihFoto)
                     {
                         _selectedImagePath = file.FullName;
+                        Debug.WriteLine($"Selected main photo: {_selectedImagePath}");
                         
                         // Update UI
-                        var image = new BitmapImage(new Uri(file.FullName));
-                        imgBarang.Source = image;
+                        imgBarang.Source = bitmap;
                         noImagePlaceholder.Visibility = Visibility.Collapsed;
+                        Debug.WriteLine("Main photo preview updated");
                     }
                     else if (sender == btnPilihFotoKondisiAwal)
                     {
                         _selectedKondisiAwalPath = file.FullName;
+                        Debug.WriteLine($"Selected kondisi awal photo: {_selectedKondisiAwalPath}");
                         
                         // Update UI
-                        var image = new BitmapImage(new Uri(file.FullName));
-                        imgKondisiAwal.Source = image; 
+                        imgKondisiAwal.Source = bitmap;
                         noImagePlaceholderKondisiAwal.Visibility = Visibility.Collapsed;
+                        Debug.WriteLine("Kondisi awal preview updated");
                     }
                     else if (sender == btnPilihFotoKondisiAkhir)
                     {
                         _selectedKondisiAkhirPath = file.FullName;
+                        Debug.WriteLine($"Selected kondisi akhir photo: {_selectedKondisiAkhirPath}");
                         
                         // Update UI
-                        var image = new BitmapImage(new Uri(file.FullName));
-                        imgKondisiAkhir.Source = image;
+                        imgKondisiAkhir.Source = bitmap;
                         noImagePlaceholderKondisiAkhir.Visibility = Visibility.Collapsed;
+                        Debug.WriteLine("Kondisi akhir preview updated");
                     }
                     
                     return file;
+                }
+                else
+                {
+                    Debug.WriteLine($"Selected file does not exist: {file.FullName}");
                 }
             }
         }
         catch (Exception ex)
         {
+            Debug.WriteLine($"Error selecting image: {ex.Message}");
             MsgBox.Show($"Error selecting image: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         
