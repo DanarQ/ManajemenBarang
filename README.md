@@ -1,6 +1,6 @@
-# Aplikasi Manajemen Barang
+# Aplikasi Manajemen Barang Disporapar
 
-Aplikasi Manajemen Barang adalah aplikasi WPF yang dirancang untuk memudahkan pengguna dalam mengelola data barang. Aplikasi ini memiliki berbagai fitur yang memungkinkan pengguna untuk menambah, mengedit, menghapus, dan mencari barang dengan mudah.
+Aplikasi Manajemen Barang Disporapar adalah aplikasi WPF yang dirancang untuk memudahkan pengguna dalam mengelola data barang. Aplikasi ini memiliki berbagai fitur yang memungkinkan pengguna untuk menambah, mengedit, menghapus, dan mencari barang dengan mudah.
 
 ## Fitur Terbaru
 
