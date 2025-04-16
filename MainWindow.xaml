@@ -314,6 +314,17 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="15,25,15,8"/>
         </Style>
+
+        <!-- New styles for sidebar info text and copyright text -->
+        <Style x:Key="SidebarInfoTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style x:Key="SidebarCopyrightTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#B3E5FC"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -359,19 +370,19 @@
                     </Grid.RowDefinitions>
                     
                     <!-- Logo Area -->
-                    <Border Grid.Row="0" Background="#0A3D8F" Padding="15,20">
+                    <Border Grid.Row="0" Background="#0A3D8F" Padding="10,20">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                             <materialIcons:MaterialIcon Kind="FolderAccount" Width="24" Height="24" Foreground="White" Margin="0,0,10,0"/>
                             <TextBlock Text="MANAJEMEN BARANG" 
                                       Foreground="White" 
                                       FontWeight="Bold" 
-                                      FontSize="16"
+                                      FontSize="15"
                                       VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     
                     <!-- Menu Items -->
-                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                    <StackPanel Grid.Row="1" Margin="0,10,5,0">
                         <TextBlock Text="MENU" Style="{StaticResource SidebarHeaderStyle}"/>
                         
                         <Button x:Name="btnListBarang" 
@@ -416,13 +427,29 @@
                                         <materialIcons:MaterialIcon Kind="Information" Width="16" Height="16" Foreground="#90CAF9"/>
                                         <TextBlock Text="VERSI APLIKASI" FontSize="11" Foreground="#90CAF9" Margin="8,0,0,0"/>
                                     </StackPanel>
-                                    <TextBlock Text="Manajemen Barang v1.1" 
-                                              Foreground="White" 
-                                              FontSize="12" 
-                                              Margin="0,0,0,5"/>
-                                    <TextBlock Text="© 2025 Disporapar" 
-                                              Foreground="#B3E5FC" 
-                                              FontSize="11"/>
+                                    <TextBlock Text="Manajemen Barang v1.1"
+                                               Style="{StaticResource SidebarInfoTextStyle}"/>
+                                    <TextBlock Text="© 2025 Disporapar"
+                                               Style="{StaticResource SidebarCopyrightTextStyle}"/>
+
+                                    <!-- Developer Info -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                        <TextBlock Text="Dibuat oleh Danar Qusyairi"
+                                                   Style="{StaticResource SidebarCopyrightTextStyle}" 
+                                                   VerticalAlignment="Center"/>
+                                        <Button Click="InstagramIcon_Click" 
+                                                Background="Transparent" 
+                                                BorderThickness="0" 
+                                                Cursor="Hand" 
+                                                Margin="8,0,0,0"
+                                                Padding="0"
+                                                VerticalAlignment="Center">
+                                            <materialIcons:MaterialIcon Kind="Instagram" 
+                                                                        Foreground="#E1306C" 
+                                                                        Width="16" 
+                                                                        Height="16"/>
+                                        </Button>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -458,14 +485,14 @@
                                         Tag="Cari barang..." TextChanged="TxtCari_TextChanged"/>
                                 <Button x:Name="btnCari" Content="Cari" Style="{StaticResource ButtonCariStyle}"
                                         Click="BtnCari_Click"/>
-                                <!-- Tombol Print Baru -->
-                                <Button x:Name="btnPrintBarang" Content="Print Daftar" Style="{StaticResource ButtonPrintStyle}"
+                                <!-- Tombol Print Baru diganti menjadi Save to Excel -->
+                                <Button x:Name="btnPrintBarang" Content="Save to Excel" Style="{StaticResource ButtonPrintStyle}"
                                         Click="BtnPrintBarang_Click">
                                     <Button.ContentTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <materialIcons:MaterialIcon Kind="Printer" Width="18" Height="18" Margin="0,0,5,0"/>
-                                                <TextBlock Text="Print Daftar"/>
+                                                <materialIcons:MaterialIcon Kind="FileExcel" Width="18" Height="18" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Save to Excel"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </Button.ContentTemplate>

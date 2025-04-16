@@ -24,18 +24,8 @@ using Win32 = Microsoft.Win32;
 using MsgBox = System.Windows.MessageBox;
 using ManajemenBarang.Views;
 using System.Diagnostics;
-using System.Printing;
-using System.Windows.Xps;
-using System.Windows.Xps.Packaging;
-using System.IO.Packaging;
-using iText.Kernel.Pdf;
-using iText.Layout;
-using iText.Layout.Element;
-using iText.Layout.Properties;
-using iText.Kernel.Colors;
-using iText.Kernel.Font;
-using iText.IO.Font.Constants;
-using iText.IO.Image;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace ManajemenBarang;
 
@@ -45,18 +35,6 @@ public static class Extensions
     public static string Repeat(this string text, int count)
     {
         return string.Concat(Enumerable.Repeat(text, count));
-    }
-    
-    public static iText.Layout.Element.Cell SetBold(this iText.Layout.Element.Cell cell, bool bold)
-    {
-        cell.SetBold(bold);
-        return cell;
-    }
-    
-    public static iText.Layout.Element.Paragraph SetBold(this iText.Layout.Element.Paragraph paragraph, bool bold)
-    {
-        paragraph.SetBold(bold);
-        return paragraph;
     }
 }
 
@@ -1301,7 +1279,7 @@ public partial class MainWindow : Window
 
             var kadinTextBox = new System.Windows.Controls.TextBox
             {
-                Text = "Drs. AGUS PURWANTO, MM",
+                Text = "Windy Prihastari, S.STP., M.Si.",
                 Margin = new System.Windows.Thickness(0, 0, 0, 10),
                 Padding = new System.Windows.Thickness(5)
             };
@@ -1317,7 +1295,7 @@ public partial class MainWindow : Window
 
             var nipTextBox = new System.Windows.Controls.TextBox
             {
-                Text = "197108171991031008",
+                Text = "19781028 199802 2 001",
                 Margin = new System.Windows.Thickness(0, 0, 0, 10),
                 Padding = new System.Windows.Thickness(5)
             };
@@ -1337,25 +1315,6 @@ public partial class MainWindow : Window
                 Margin = new System.Windows.Thickness(0, 0, 0, 20)
             };
             formPanel.Children.Add(tanggalPicker);
-
-            // Format selection
-            var formatLabel = new System.Windows.Controls.TextBlock
-            {
-                Text = "Format Dokumen:",
-                Margin = new System.Windows.Thickness(0, 0, 0, 5)
-            };
-            formPanel.Children.Add(formatLabel);
-
-            var formatComboBox = new System.Windows.Controls.ComboBox
-            {
-                Margin = new System.Windows.Thickness(0, 0, 0, 20),
-                SelectedIndex = 0,
-                Height = 25,
-                Padding = new System.Windows.Thickness(5, 3, 5, 3)
-            };
-            formatComboBox.Items.Add("PDF");
-            formatComboBox.Items.Add("Excel");
-            formPanel.Children.Add(formatComboBox);
 
             // Buttons panel
             var buttonsPanel = new System.Windows.Controls.StackPanel
@@ -1379,7 +1338,7 @@ public partial class MainWindow : Window
 
             var saveButton = new System.Windows.Controls.Button
             {
-                Content = "Simpan",
+                Content = "Simpan Excel",
                 Width = 120,
                 Height = 30,
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.DarkBlue),
@@ -1389,21 +1348,11 @@ public partial class MainWindow : Window
 
             printSettingsDialog.Content = mainGrid;
 
-            // Atur event handler tombol
+            // Save button only calls Excel export
             saveButton.Click += (s, e) =>
             {
                 printSettingsDialog.Close();
-                
-                if (formatComboBox.SelectedIndex == 0)
-                {
-                    // PDF
-                    ExportToPdf(kadinTextBox.Text, nipTextBox.Text, tanggalPicker.SelectedDate ?? DateTime.Now);
-                }
-                else
-                {
-                    // Excel
-                    ExportToExcel(kadinTextBox.Text, nipTextBox.Text, tanggalPicker.SelectedDate ?? DateTime.Now);
-                }
+                ExportToExcel(kadinTextBox.Text, nipTextBox.Text, tanggalPicker.SelectedDate ?? DateTime.Now);
             };
 
             printSettingsDialog.ShowDialog();
@@ -1411,262 +1360,6 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    private void ExportToPdf(string namaPejabat, string nipPejabat, DateTime tanggalDokumen)
-    {
-        try
-        {
-            // Create a SaveFileDialog
-            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "PDF Files (*.pdf)|*.pdf",
-                DefaultExt = "pdf",
-                FileName = $"Daftar_Barang_{DateTime.Now:yyyyMMdd}",
-                Title = "Simpan Dokumen PDF",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) // Default to Documents folder
-            };
-
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                string outputPath = saveFileDialog.FileName;
-                
-                // Make sure the directory exists
-                string directoryPath = Path.GetDirectoryName(outputPath);
-                if (!Directory.Exists(directoryPath))
-                {
-                    Directory.CreateDirectory(directoryPath);
-                }
-                
-                // Test write permissions by creating a small test file
-                string testFilePath = Path.Combine(directoryPath, $"test_{Guid.NewGuid()}.tmp");
-                bool hasPermissions = false;
-                
-                try
-                {
-                    // Try to create a test file
-                    File.WriteAllText(testFilePath, "Test");
-                    hasPermissions = true;
-                    
-                    // Clean up test file
-                    if (File.Exists(testFilePath))
-                    {
-                        File.Delete(testFilePath);
-                    }
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    // No write permissions
-                    MsgBox.Show($"Anda tidak memiliki izin untuk menulis ke folder ini: {directoryPath}\nSilakan pilih lokasi lain.", 
-                               "Perhatian", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error in permission check: {ex.Message}");
-                    // Continue anyway
-                }
-                
-                if (!hasPermissions)
-                {
-                    return;
-                }
-                
-                try
-                {
-                    // Create a temporary filename in a location we know we have access to
-                    string tempPath = Path.Combine(Path.GetTempPath(), $"temp_doc_{Guid.NewGuid()}.pdf");
-                    
-                    // First create PDF in temp location
-                    using (var writer = new PdfWriter(tempPath))
-                    {
-                        using (var pdf = new PdfDocument(writer))
-                        {
-                            // Create a simple document with A4 size
-                            var document = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4);
-                            document.SetMargins(50, 50, 50, 50);
-                            
-                            // Use basic fonts
-                            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
-                            PdfFont boldFont = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
-                            
-                            // Add header
-                            var header1 = new iText.Layout.Element.Paragraph("PEMERINTAH KABUPATEN TULUNGAGUNG")
-                                .SetFont(boldFont)
-                                .SetFontSize(14)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER);
-                            document.Add(header1);
-                            
-                            var header2 = new iText.Layout.Element.Paragraph("DINAS PEMUDA, OLAHRAGA DAN PARIWISATA")
-                                .SetFont(boldFont)
-                                .SetFontSize(16)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER);
-                            document.Add(header2);
-                            
-                            document.Add(new iText.Layout.Element.Paragraph("Jl. Ki Mangunsarkoro No. 1 Telp. (0355) 322220 Tulungagung")
-                                .SetFont(font)
-                                .SetFontSize(12)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
-                            
-                            document.Add(new iText.Layout.Element.Paragraph("Website: disporapar.tulungagung.go.id | Email: disporapar@tulungagung.go.id")
-                                .SetFont(font)
-                                .SetFontSize(11)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
-                            
-                            // Add a simple line
-                            document.Add(new iText.Layout.Element.Paragraph("_".Repeat(100))
-                                .SetFont(font)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
-                            
-                            // Add title
-                            document.Add(new iText.Layout.Element.Paragraph("DAFTAR INVENTARIS BARANG")
-                                .SetFont(boldFont)
-                                .SetFontSize(16)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER)
-                                .SetMarginTop(10));
-                            
-                            document.Add(new iText.Layout.Element.Paragraph($"TAHUN {DateTime.Now.Year}")
-                                .SetFont(boldFont)
-                                .SetFontSize(14)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
-                            
-                            // Add date
-                            document.Add(new iText.Layout.Element.Paragraph($"Tanggal Cetak: {DateTime.Now:dd MMMM yyyy HH:mm}")
-                                .SetFont(font)
-                                .SetFontSize(10)
-                                .SetMarginTop(10)
-                                .SetMarginBottom(10));
-                            
-                            // Create table - simpler approach
-                            var table = new iText.Layout.Element.Table(5);
-                            table.UseAllAvailableWidth();
-                            table.SetWidth(UnitValue.CreatePercentValue(100));
-                            
-                            // Add header cells
-                            table.AddHeaderCell(CreateCell("ID", boldFont, true));
-                            table.AddHeaderCell(CreateCell("Nama Barang", boldFont, true));
-                            table.AddHeaderCell(CreateCell("Merek", boldFont, true));
-                            table.AddHeaderCell(CreateCell("Harga", boldFont, true));
-                            table.AddHeaderCell(CreateCell("Pengguna", boldFont, true));
-                            
-                            // Add data rows
-                            foreach (var item in _daftarBarang)
-                            {
-                                table.AddCell(CreateCell(item.IdBarang, font, false));
-                                table.AddCell(CreateCell(item.NamaBarang, font, false));
-                                table.AddCell(CreateCell(item.MerekBarang, font, false));
-                                table.AddCell(CreateCell(FormatRupiah(item.HargaBarang), font, false, iText.Layout.Properties.TextAlignment.RIGHT));
-                                table.AddCell(CreateCell(item.NamaPengguna, font, false));
-                            }
-                            
-                            document.Add(table);
-                            
-                            // Add summary
-                            document.Add(new iText.Layout.Element.Paragraph("RINGKASAN")
-                                .SetFont(boldFont)
-                                .SetFontSize(14)
-                                .SetMarginTop(20)
-                                .SetMarginBottom(10));
-                            
-                            // Total items
-                            document.Add(new iText.Layout.Element.Paragraph($"Total Jumlah Barang: {_daftarBarang.Count} item")
-                                .SetFont(font));
-                            
-                            // Total value
-                            decimal totalValue = _daftarBarang.Sum(item => item.HargaBarang);
-                            document.Add(new iText.Layout.Element.Paragraph($"Total Nilai Inventaris: {FormatRupiah(totalValue)}")
-                                .SetFont(font));
-                            
-                            // Add signature section
-                            document.Add(new iText.Layout.Element.Paragraph($"Tulungagung, {tanggalDokumen:dd MMMM yyyy}")
-                                .SetFont(font)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT)
-                                .SetMarginTop(20));
-                            
-                            document.Add(new iText.Layout.Element.Paragraph("Kepala Dinas")
-                                .SetFont(font)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
-                            
-                            // Space for signature
-                            document.Add(new iText.Layout.Element.Paragraph("\n\n\n")
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
-                            
-                            // Name of official
-                            document.Add(new iText.Layout.Element.Paragraph(namaPejabat)
-                                .SetFont(boldFont)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
-                            
-                            // NIP
-                            document.Add(new iText.Layout.Element.Paragraph($"NIP. {nipPejabat}")
-                                .SetFont(font)
-                                .SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
-                            
-                            document.Close();
-                        }
-                    }
-                    
-                    // Force garbage collection to release any handles
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    
-                    // Now copy from temp to final destination
-                    File.Copy(tempPath, outputPath, true);
-                    
-                    // Clean up temp file
-                    try
-                    {
-                        if (File.Exists(tempPath))
-                        {
-                            File.Delete(tempPath);
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore cleanup errors
-                    }
-                    
-                    // Open the file
-                    try
-                    {
-                        // Ensure file exists before trying to open it
-                        if (File.Exists(outputPath))
-                        {
-                            // Use more robust method for opening PDF
-                            Process.Start(new ProcessStartInfo
-                            {
-                                FileName = outputPath,
-                                UseShellExecute = true
-                            });
-                            
-                            MsgBox.Show($"File PDF berhasil disimpan di:\n{outputPath}", 
-                                    "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
-                        else
-                        {
-                            MsgBox.Show($"File berhasil dibuat tetapi tidak dapat ditemukan di lokasi: {outputPath}", 
-                                    "Peringatan", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MsgBox.Show($"File berhasil disimpan, tetapi tidak dapat dibuka otomatis: {ex.Message}\n" +
-                                $"Lokasi file: {outputPath}", 
-                                "Perhatian", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"PDF Exception: {ex.Message}\n{ex.StackTrace}");
-                    MsgBox.Show($"Terjadi kesalahan saat membuat PDF: {ex.Message}", 
-                           "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            MsgBox.Show($"Terjadi kesalahan: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            Debug.WriteLine(ex.ToString());
         }
     }
 
@@ -1679,7 +1372,7 @@ public partial class MainWindow : Window
             {
                 Filter = "Excel Files (*.xlsx)|*.xlsx",
                 DefaultExt = "xlsx",
-                FileName = $"Daftar_Barang_{DateTime.Now:yyyyMMdd}",
+                FileName = $"Daftar_Barang_{DateTime.Now:yyyyMMdd}.xlsx", // Ensure .xlsx extension
                 Title = "Simpan Dokumen Excel",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
@@ -1688,112 +1381,273 @@ public partial class MainWindow : Window
             {
                 string outputPath = saveFileDialog.FileName;
                 
-                // Check permissions using the same approach as PDF
+                // Ensure directory exists
                 string directoryPath = Path.GetDirectoryName(outputPath);
-                if (!Directory.Exists(directoryPath))
+                if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
                 {
-                    Directory.CreateDirectory(directoryPath);
-                }
-                
-                string testFilePath = Path.Combine(directoryPath, $"test_{Guid.NewGuid()}.tmp");
-                bool hasPermissions = false;
-                
-                try
-                {
-                    File.WriteAllText(testFilePath, "Test");
-                    hasPermissions = true;
-                    
-                    if (File.Exists(testFilePath))
+                    try { Directory.CreateDirectory(directoryPath); }
+                    catch (Exception ex)
                     {
-                        File.Delete(testFilePath);
+                        MsgBox.Show($"Gagal membuat direktori: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }
                 }
-                catch (UnauthorizedAccessException)
-                {
-                    MsgBox.Show($"Anda tidak memiliki izin untuk menulis ke folder ini: {directoryPath}\nSilakan pilih lokasi lain.", 
-                           "Perhatian", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error in permission check: {ex.Message}");
-                }
                 
-                if (!hasPermissions)
-                {
-                    return;
-                }
-                
-                // Create Excel file using a CSV approach first (simpler)
-                // Later we can enhance this to use a proper Excel library if needed
-                string tempCsvPath = Path.Combine(Path.GetTempPath(), $"temp_excel_{Guid.NewGuid()}.csv");
-                
+                // Set EPPlus license context
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
                 try
                 {
-                    using (var writer = new StreamWriter(tempCsvPath, false, Encoding.UTF8))
+                    // Create package in memory first
+                    using (var package = new ExcelPackage())
                     {
-                        // Write header information
-                        writer.WriteLine("PEMERINTAH KABUPATEN TULUNGAGUNG");
-                        writer.WriteLine("DINAS PEMUDA, OLAHRAGA DAN PARIWISATA");
-                        writer.WriteLine("Jl. Ki Mangunsarkoro No. 1 Telp. (0355) 322220 Tulungagung");
-                        writer.WriteLine("Website: disporapar.tulungagung.go.id | Email: disporapar@tulungagung.go.id");
-                        writer.WriteLine("");
-                        writer.WriteLine("DAFTAR INVENTARIS BARANG");
-                        writer.WriteLine($"TAHUN {DateTime.Now.Year}");
-                        writer.WriteLine($"Tanggal Cetak: {DateTime.Now:dd MMMM yyyy HH:mm}");
-                        writer.WriteLine("");
+                        var worksheet = package.Workbook.Worksheets.Add("Daftar Barang");
                         
+                        // Set default font
+                        worksheet.Cells.Style.Font.Name = "Times New Roman";
+                        worksheet.Cells.Style.Font.Size = 11;
+                        
+                        int totalColumns = 8; // Define total columns for easy reference
+                        int row = 1;
+
+                        // Header information
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = "PEMERINTAH PROVINSI KALIMANTAN BARAT";
+                        worksheet.Cells[row, 1].Style.Font.Bold = true;
+                        worksheet.Cells[row, 1].Style.Font.Size = 14;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = "DINAS PEMUDA, OLAHRAGA DAN PARIWISATA";
+                        worksheet.Cells[row, 1].Style.Font.Bold = true;
+                        worksheet.Cells[row, 1].Style.Font.Size = 16;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+                        
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = "Jl. Ki Mangunsarkoro No. 1 Telp. (0355) 322220 Tulungagung";
+                        worksheet.Cells[row, 1].Style.Font.Size = 12;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = "Telp.  (0561) 742838 Faximile (0561) 739644";
+                        worksheet.Cells[row, 1].Style.Font.Size = 12;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+                        
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = "Laman www.disporapar@kalbarprov.go.id Pos-el disporapar.kalbarprov.go.id";
+                        worksheet.Cells[row, 1].Style.Font.Size = 11;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+                        
+                        // Add a border line
+                        worksheet.Cells[row, 1, row, totalColumns].Style.Border.Bottom.Style = ExcelBorderStyle.Thick;
+                        row++;
+                        row++; // Extra space
+                        
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = "DAFTAR INVENTARIS BARANG";
+                        worksheet.Cells[row, 1].Style.Font.Bold = true;
+                        worksheet.Cells[row, 1].Style.Font.Size = 16;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+                        
+                        worksheet.Cells[row, 1, row, totalColumns].Merge = true;
+                        worksheet.Cells[row, 1].Value = $"TAHUN {DateTime.Now.Year}";
+                        worksheet.Cells[row, 1].Style.Font.Bold = true;
+                        worksheet.Cells[row, 1].Style.Font.Size = 14;
+                        worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        row++;
+                        row++; // Extra space
+                        
+                        // --- Start Data Table --- 
+                        int dataTableHeaderRow = row;
+
                         // Table headers
-                        writer.WriteLine("ID,Nama Barang,Merek,Harga,Pengguna");
+                        string[] headers = { "ID", "Nama Barang", "Merek", "Harga", "Tgl Perolehan", "Tgl Pinjam", "Pengguna", "Bidang" };
+                        for (int col = 1; col <= headers.Length; col++)
+                        {
+                            worksheet.Cells[row, col].Value = headers[col - 1];
+                        }
+                        row++;
                         
                         // Data rows
+                        int dataStartRow = row;
                         foreach (var item in _daftarBarang)
                         {
-                            // Format cells properly for CSV
-                            var id = item.IdBarang;
-                            var nama = $"\"{item.NamaBarang.Replace("\"", "\"\"")}\""; // Escape quotes
-                            var merek = $"\"{item.MerekBarang.Replace("\"", "\"\"")}\"";
-                            var harga = $"\"{FormatRupiah(item.HargaBarang).Replace("\"", "\"\"")}\"";
-                            var pengguna = $"\"{item.NamaPengguna.Replace("\"", "\"\"")}\"";
-                            
-                            writer.WriteLine($"{id},{nama},{merek},{harga},{pengguna}");
+                            worksheet.Cells[row, 1].Value = item.IdBarang;
+                            worksheet.Cells[row, 2].Value = item.NamaBarang;
+                            worksheet.Cells[row, 3].Value = item.MerekBarang;
+                            worksheet.Cells[row, 4].Value = item.HargaBarang;
+                            worksheet.Cells[row, 4].Style.Numberformat.Format = @"\R\p #,##0"; // Rupiah format
+                            worksheet.Cells[row, 5].Value = item.TanggalPerolehan;
+                            worksheet.Cells[row, 5].Style.Numberformat.Format = "dd/MM/yyyy"; // Date format
+                            worksheet.Cells[row, 6].Value = item.TanggalPinjam;
+                            worksheet.Cells[row, 6].Style.Numberformat.Format = "dd/MM/yyyy"; // Date format
+                            worksheet.Cells[row, 7].Value = item.NamaPengguna;
+                            worksheet.Cells[row, 8].Value = item.Bidang;
+                            row++;
                         }
+                        int dataEndRow = row - 1;
+                        // --- End Data Table --- 
                         
-                        writer.WriteLine("");
-                        writer.WriteLine("RINGKASAN");
-                        writer.WriteLine($"Total Jumlah Barang: {_daftarBarang.Count} item");
+                        row++; // Space before summary
                         
+                        // --- Start Summary Section --- 
+                        int summaryStartRow = row;
+                        
+                        // worksheet.Cells[row, 2, row, totalColumns].Merge = true; // Merge across all columns for the title
+                        worksheet.Cells[row, 3].Value = "RINGKASAN";
+                        worksheet.Cells[row, 2].Style.Font.Bold = true;
+                        worksheet.Cells[row, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left; // Align title left
+                        row++;
+                        
+                        // Total Jumlah Barang
+                        worksheet.Cells[row, 3].Value = "Total Jumlah Barang:"; // Label in Col B
+                        worksheet.Cells[row, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left; // Align label left
+                        worksheet.Cells[row, 4].Value = _daftarBarang.Count; // Value in Col C
+                        worksheet.Cells[row,4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left; // Align value right
+                        row++;
+                        
+                        // Total Nilai Inventaris
+                        worksheet.Cells[row, 3].Value = "Total Nilai Inventaris:"; // Label in Col B
+                        worksheet.Cells[row, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left; // Align label left
                         decimal totalValue = _daftarBarang.Sum(item => item.HargaBarang);
-                        writer.WriteLine($"Total Nilai Inventaris: {FormatRupiah(totalValue)}");
-                        writer.WriteLine("");
+                        worksheet.Cells[row, 4].Value = totalValue; // Value in Col C
+                        worksheet.Cells[row, 4].Style.Numberformat.Format = @"\R\p #,##0";
+                        worksheet.Cells[row, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left; // Align value right
+                        row++;
+                        // --- End Summary Section --- 
+
+                        row++;
+                        row++; // Space before signature
+
+                        // --- Start Signature Section --- 
+                        int signatureStartRow = row;
+                        int signatureColumn = totalColumns; // Align signature to the last column
                         
-                        writer.WriteLine($"Tulungagung, {tanggalDokumen:dd MMMM yyyy}");
-                        writer.WriteLine("Kepala Dinas");
-                        writer.WriteLine("");
-                        writer.WriteLine("");
-                        writer.WriteLine(namaPejabat);
-                        writer.WriteLine($"NIP. {nipPejabat}");
-                    }
-                    
-                    // Force close any handles
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    
-                    // For simplicity, we'll just rename the CSV to XLSX for now
-                    // In a real implementation, you'd use a library like EPPlus or NPOI
-                    File.Copy(tempCsvPath, outputPath, true);
-                    
-                    // Clean up the temporary file
-                    try
-                    {
-                        if (File.Exists(tempCsvPath))
+                        worksheet.Cells[row, signatureColumn].Value = $"Tulungagung, {tanggalDokumen:dd MMMM yyyy}";
+                        row++;
+                        
+                        worksheet.Cells[row, signatureColumn].Value = "Kepala Dinas";
+                        row += 4; // Space for signature
+                        
+                        worksheet.Cells[row, signatureColumn].Value = namaPejabat;
+                        row++;
+                        
+                        worksheet.Cells[row, signatureColumn].Value = $"NIP. {nipPejabat}";
+                        int signatureEndRow = row;
+                        // --- End Signature Section --- 
+
+                        // === Apply Styling and Print Settings ===
+
+                        // Adjust column widths precisely
+                        worksheet.Column(1).Width = 6;  // ID
+                        worksheet.Column(2).Width = 35; // Nama Barang
+                        worksheet.Column(3).Width = 25; // Merek
+                        worksheet.Column(4).Width = 18; // Harga
+                        worksheet.Column(5).Width = 15; // Tgl Perolehan
+                        worksheet.Column(6).Width = 15; // Tgl Pinjam
+                        worksheet.Column(7).Width = 30; // Pengguna
+                        worksheet.Column(8).Width = 20; // Bidang
+
+                        // Style the main title headers (Rows 1-5)
+                        using (var range = worksheet.Cells[1, 1, 5, totalColumns])
                         {
-                            File.Delete(tempCsvPath);
+                            range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                            range.Style.WrapText = false; 
                         }
-                    }
-                    catch
-                    {
-                        // Ignore cleanup errors
+                        worksheet.Cells[1, 1, 2, totalColumns].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 32, 96)); // Dark Blue
+                        worksheet.Cells[3, 1, 5, totalColumns].Style.Font.Size = 10; 
+
+                        // Style the table headers (dataTableHeaderRow)
+                        using (var range = worksheet.Cells[dataTableHeaderRow, 1, dataTableHeaderRow, totalColumns])
+                        {
+                            range.Style.Font.Bold = true;
+                            range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(220, 220, 220)); // Lighter Gray
+                            range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                            range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thick;
+                            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                        }
+                        
+                        // Apply alternating row colors and borders to data rows (dataStartRow to dataEndRow)
+                        for (int i = dataStartRow; i <= dataEndRow; i++)
+                        {
+                            // Apply borders first
+                            using (var range = worksheet.Cells[i, 1, i, totalColumns])
+                            {
+                                range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                                range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                                range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                                range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                                range.Style.VerticalAlignment = ExcelVerticalAlignment.Top; 
+                                range.Style.WrapText = true; 
+                            }
+                            
+                            // Apply alternating background color
+                            if (i % 2 == 0) // Even data rows 
+                            {
+                                using (var range = worksheet.Cells[i, 1, i, totalColumns])
+                                {
+                                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(242, 242, 242)); // Very Light Gray
+                                }
+                            }
+                            // Ensure Harga column is right-aligned
+                            worksheet.Cells[i, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                             // Center align date columns
+                            worksheet.Cells[i, 5, i, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center; 
+                        }
+
+                        // Style the Summary section 
+                        worksheet.Cells[summaryStartRow, 1].Style.Font.Size = 12; // RINGKASAN title
+                        worksheet.Cells[summaryStartRow + 1, 3, summaryStartRow + 2, 3].Style.Font.Bold = true; // Values Bold (Column C)
+
+                        // Style Signature Section (Right Align All in the signature column)
+                        using(var range = worksheet.Cells[signatureStartRow, signatureColumn, signatureEndRow, signatureColumn])
+                        {
+                             range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                        }
+                        worksheet.Cells[signatureEndRow - 1, signatureColumn].Style.Font.Bold = true; // Bold Name
+
+                        // Print Settings
+                        worksheet.PrinterSettings.PaperSize = ePaperSize.A4;
+                        worksheet.PrinterSettings.Orientation = eOrientation.Landscape;
+                        worksheet.PrinterSettings.FitToPage = true; 
+                        worksheet.PrinterSettings.FitToWidth = 1;  
+                        worksheet.PrinterSettings.FitToHeight = 0; 
+                        worksheet.PrinterSettings.PrintArea = worksheet.Cells[1, 1, signatureEndRow, totalColumns]; // Print from A1 to last cell
+                        worksheet.PrinterSettings.HorizontalCentered = true;
+                        worksheet.PrinterSettings.VerticalCentered = false; 
+                        worksheet.PrinterSettings.TopMargin = 0.75M;   
+                        worksheet.PrinterSettings.BottomMargin = 0.75M;
+                        worksheet.PrinterSettings.LeftMargin = 0.5M;   
+                        worksheet.PrinterSettings.RightMargin = 0.5M;
+                        worksheet.PrinterSettings.HeaderMargin = 0.3M;
+                        worksheet.PrinterSettings.FooterMargin = 0.3M;
+                        worksheet.HeaderFooter.OddHeader.CenteredText = "&\"Arial,Bold\"&12DAFTAR INVENTARIS BARANG"; 
+                        worksheet.HeaderFooter.OddFooter.RightAlignedText = string.Format("Halaman {0} dari {1}", ExcelHeaderFooter.PageNumber, ExcelHeaderFooter.NumberOfPages);
+                        worksheet.HeaderFooter.OddFooter.LeftAlignedText = $"Dicetak: {DateTime.Now:dd-MMM-yyyy HH:mm}";
+
+                        // === End Styling and Print Settings ===
+                        
+                        // Save the file (overwrite if exists)
+                        if (File.Exists(outputPath))
+                        {
+                           try { File.Delete(outputPath); }
+                           catch (IOException ex) 
+                           { 
+                               Debug.WriteLine($"Could not delete existing Excel file: {ex.Message}"); 
+                           }
+                        }
+                        package.SaveAs(new FileInfo(outputPath));
                     }
                     
                     // Try to open the file
@@ -1805,7 +1659,7 @@ public partial class MainWindow : Window
                             UseShellExecute = true
                         });
                         
-                        MsgBox.Show($"File Excel (CSV) berhasil disimpan di:\n{outputPath}\n\nCatatan: File ini adalah CSV yang diubah ekstensinya menjadi XLSX.", 
+                        MsgBox.Show($"File Excel berhasil disimpan di:\n{outputPath}", 
                                 "Sukses", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch (Exception ex)
@@ -1815,11 +1669,23 @@ public partial class MainWindow : Window
                                 "Perhatian", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Debug.WriteLine($"Excel Unauthorized Access: {ex.Message}\n{ex.StackTrace}");
+                    MsgBox.Show($"Akses ditolak saat mencoba menyimpan file Excel: {ex.Message}\nPastikan Anda memiliki izin tulis ke folder tersebut.", 
+                               "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (IOException ex) when ((ex.HResult & 0xFFFF) == 32) // ERROR_SHARING_VIOLATION
+                {
+                    Debug.WriteLine($"Excel File In Use: {ex.Message}\n{ex.StackTrace}");
+                    MsgBox.Show($"File Excel sedang digunakan oleh program lain. Harap tutup file tersebut dan coba lagi.", 
+                               "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Excel Exception: {ex.Message}\n{ex.StackTrace}");
                     MsgBox.Show($"Terjadi kesalahan saat membuat file Excel: {ex.Message}", 
-                           "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                               "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -1830,28 +1696,29 @@ public partial class MainWindow : Window
         }
     }
     
-    private iText.Layout.Element.Cell CreateCell(string text, PdfFont font, bool isHeader, iText.Layout.Properties.TextAlignment alignment = iText.Layout.Properties.TextAlignment.LEFT)
-    {
-        var cell = new iText.Layout.Element.Cell().Add(
-            new iText.Layout.Element.Paragraph(text).SetFont(font)
-        );
-        
-        if (isHeader)
-        {
-            cell.SetBackgroundColor(new DeviceRgb(240, 240, 240));
-            cell.SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER);
-            cell.SetBold(true);
-        }
-        else
-        {
-            cell.SetTextAlignment(alignment);
-        }
-        
-        return cell;
-    }
-    
     private string FormatRupiah(decimal value)
     {
         return string.Format(CultureInfo.CreateSpecificCulture("id-ID"), "Rp {0:N0}", value);
+    }
+
+    private void InstagramIcon_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // URL to open
+            string url = "https://www.instagram.com/dan.szee/";
+
+            // Use Process.Start to open the URL in the default browser
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true // Important for opening URLs
+            });
+        }
+        catch (Exception ex)
+        {
+            // Handle potential errors (e.g., browser not found)
+            MsgBox.Show($"Tidak dapat membuka link: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }
